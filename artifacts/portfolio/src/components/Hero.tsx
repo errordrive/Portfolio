@@ -68,128 +68,126 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/6 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-violet-500/5 rounded-full blur-[100px] pointer-events-none" />
 
+      {/* Image — absolutely anchored to top-right corner, desktop only */}
+      <motion.div
+        initial={{ opacity: 0, x: 30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+        className="hidden sm:block absolute top-16 right-4 sm:right-8 lg:right-14"
+      >
+        <div className="relative">
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/30 to-violet-500/15 blur-xl" />
+
+          <div className="relative w-40 sm:w-52 lg:w-72 aspect-[3/4] rounded-2xl overflow-hidden glass border border-primary/20 shadow-2xl">
+            <img
+              src="/photo1.png"
+              alt={`${d.name} — Vibe Coder`}
+              className="w-full h-full object-cover object-top"
+              loading="eager"
+            />
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background/80 to-transparent" />
+            <div className="absolute bottom-3 left-3 right-3 glass rounded-xl px-3 py-2 border border-primary/20">
+              <div className="text-xs font-bold text-foreground">{d.name}</div>
+              <div className="text-[10px] text-primary mt-0.5 leading-tight">Vibe Coder · AI User · Android RE</div>
+            </div>
+          </div>
+
+          <div className="absolute -top-3 -right-3 glass rounded-xl px-2.5 py-1.5 border border-violet-500/30 shadow-lg">
+            <div className="text-[10px] font-bold text-violet-400">✨ Vibe Coder</div>
+          </div>
+
+          <div className="absolute -bottom-3 -left-3 glass rounded-xl px-2.5 py-1.5 border border-primary/30 shadow-lg">
+            <div className="text-[10px] font-bold text-primary">🤖 AI-Powered</div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Text content — left side */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 w-full">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="order-1"
-          >
-            <motion.div variants={item} className="mb-4">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-sm font-medium text-primary border border-primary/20">
-                <span className="w-2 h-2 rounded-full bg-primary" />
-                {d.statusBadge || "Open to collaborate"}
-              </span>
-            </motion.div>
-
-            <motion.h1 variants={item} className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-4">
-              <span className="text-foreground">Hi, I'm </span>
-              <span className="gradient-text neon-text-glow">{d.name}</span>
-            </motion.h1>
-
-            {d.tagline && (
-              <motion.p variants={item} className="text-base sm:text-xl font-semibold text-foreground/80 mb-4 max-w-lg">
-                {d.tagline}
-              </motion.p>
-            )}
-
-            <motion.div variants={item} className="mb-6">
-              <div className="flex flex-wrap gap-2 mb-4">
-                {roles.map((role, i) => {
-                  const c = ROLE_COLORS[i % ROLE_COLORS.length];
-                  return (
-                    <span
-                      key={role}
-                      className="px-3 py-1 rounded-md text-sm font-semibold"
-                      style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}` }}
-                    >
-                      {role}
-                    </span>
-                  );
-                })}
-              </div>
-            </motion.div>
-
-            <motion.p variants={item} className="text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
-              {d.body}
-            </motion.p>
-
-            <motion.div variants={item} className="flex flex-wrap gap-4">
-              <motion.a
-                href={d.ctaPrimary.href || "#projects"}
-                onClick={(e) => {
-                  const href = d.ctaPrimary.href || "#projects";
-                  if (href.startsWith("#")) {
-                    e.preventDefault();
-                    document.getElementById(href.replace("#", ""))?.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-primary text-white font-bold text-sm neon-glow hover:bg-primary/90 transition-colors"
-              >
-                {d.ctaPrimary.label || "View Work"} <ArrowRight className="w-4 h-4" />
-              </motion.a>
-              {validCvUrl && (
-                <motion.a
-                  href={validCvUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl glass text-foreground font-bold text-sm border border-border hover:border-primary/40 transition-colors"
-                >
-                  <Download className="w-4 h-4" /> {d.ctaSecondary.label || "Download CV"}
-                </motion.a>
-              )}
-            </motion.div>
-
-            <motion.div variants={item} className="mt-8 lg:mt-12 grid grid-cols-3 gap-3 sm:gap-8">
-              {(d.stats?.length ? d.stats : DEFAULT_HERO.stats).map((stat) => (
-                <div key={stat.label}>
-                  <div className="text-xl sm:text-2xl font-black gradient-text">{stat.value}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{stat.label}</div>
-                </div>
-              ))}
-            </motion.div>
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="max-w-xl lg:max-w-2xl"
+        >
+          <motion.div variants={item} className="mb-4">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-sm font-medium text-primary border border-primary/20">
+              <span className="w-2 h-2 rounded-full bg-primary" />
+              {d.statusBadge || "Open to collaborate"}
+            </span>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            className="order-2 flex justify-center lg:justify-end"
-          >
-            <div className="relative">
-              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/30 to-violet-500/15 blur-xl" />
+          <motion.h1 variants={item} className="text-3xl sm:text-4xl lg:text-6xl font-black leading-[1.05] tracking-tight mb-4">
+            <span className="text-foreground">Hi, I'm </span>
+            <span className="gradient-text neon-text-glow">{d.name}</span>
+          </motion.h1>
 
-              <div className="relative w-64 sm:w-80 lg:w-96 aspect-[3/4] sm:aspect-auto rounded-3xl overflow-hidden glass border border-primary/20 shadow-2xl">
-                <img
-                  src="/photo1.png"
-                  alt={`${d.name} — Vibe Coder`}
-                  className="w-full h-full sm:h-auto object-cover object-top"
-                  loading="eager"
-                  style={{ maxHeight: "480px" }}
-                />
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background/80 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4 glass rounded-xl px-4 py-3 border border-primary/20">
-                  <div className="text-sm font-bold text-foreground">{d.name}</div>
-                  <div className="text-xs text-primary mt-0.5">Vibe Coder · AI User · Android RE Explorer</div>
-                </div>
-              </div>
+          {d.tagline && (
+            <motion.p variants={item} className="text-sm sm:text-lg font-semibold text-foreground/80 mb-4 max-w-lg">
+              {d.tagline}
+            </motion.p>
+          )}
 
-              <div className="hidden sm:block absolute -top-4 -right-4 glass rounded-2xl px-3 py-2 border border-violet-500/30 shadow-lg">
-                <div className="text-xs font-bold text-violet-400">✨ Vibe Coder</div>
-              </div>
-
-              <div className="hidden sm:block absolute -bottom-4 -left-4 glass rounded-2xl px-3 py-2 border border-primary/30 shadow-lg">
-                <div className="text-xs font-bold text-primary">🤖 AI-Powered</div>
-              </div>
+          <motion.div variants={item} className="mb-5">
+            <div className="flex flex-wrap gap-2 mb-4">
+              {roles.map((role, i) => {
+                const c = ROLE_COLORS[i % ROLE_COLORS.length];
+                return (
+                  <span
+                    key={role}
+                    className="px-3 py-1 rounded-md text-xs font-semibold"
+                    style={{ background: c.bg, color: c.color, border: `1px solid ${c.border}` }}
+                  >
+                    {role}
+                  </span>
+                );
+              })}
             </div>
           </motion.div>
-        </div>
+
+          <motion.p variants={item} className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-7 max-w-lg">
+            {d.body}
+          </motion.p>
+
+          <motion.div variants={item} className="flex flex-wrap gap-3">
+            <motion.a
+              href={d.ctaPrimary.href || "#projects"}
+              onClick={(e) => {
+                const href = d.ctaPrimary.href || "#projects";
+                if (href.startsWith("#")) {
+                  e.preventDefault();
+                  document.getElementById(href.replace("#", ""))?.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary text-white font-bold text-sm neon-glow hover:bg-primary/90 transition-colors"
+            >
+              {d.ctaPrimary.label || "View Work"} <ArrowRight className="w-4 h-4" />
+            </motion.a>
+            {validCvUrl && (
+              <motion.a
+                href={validCvUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl glass text-foreground font-bold text-sm border border-border hover:border-primary/40 transition-colors"
+              >
+                <Download className="w-4 h-4" /> {d.ctaSecondary.label || "Download CV"}
+              </motion.a>
+            )}
+          </motion.div>
+
+          <motion.div variants={item} className="mt-8 lg:mt-10 grid grid-cols-3 gap-3 sm:gap-8 max-w-xs sm:max-w-sm">
+            {(d.stats?.length ? d.stats : DEFAULT_HERO.stats).map((stat) => (
+              <div key={stat.label}>
+                <div className="text-lg sm:text-xl font-black gradient-text">{stat.value}</div>
+                <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{stat.label}</div>
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-muted-foreground animate-bounce-slow">

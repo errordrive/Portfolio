@@ -58,24 +58,23 @@ export default function About({ data: dataProp, visible: visibleProp }: AboutPro
             transition={{ duration: 0.5 }}
             className="relative"
           >
-            <div className="relative inline-block">
-              <div className="absolute -top-6 -left-6 w-24 h-24 border-2 border-primary/30 rounded-2xl" />
-              <div className="absolute -bottom-6 -right-6 w-24 h-24 border-2 border-violet-500/30 rounded-2xl" />
+            <div className="relative inline-block w-full max-w-xs mx-auto lg:mx-0">
+              <div className="absolute -top-4 -left-4 w-16 h-16 border-2 border-primary/30 rounded-2xl" />
+              <div className="absolute -bottom-4 -right-4 w-16 h-16 border-2 border-violet-500/30 rounded-2xl" />
 
-              <div className="relative rounded-3xl overflow-hidden glass border border-border/50 shadow-2xl max-w-sm mx-auto lg:mx-0">
+              <div className="relative rounded-2xl overflow-hidden glass border border-border/50 shadow-2xl aspect-[3/4]">
                 <img
                   src="/photo2.png"
                   alt="Nayem — About"
-                  className="w-full object-cover"
+                  className="w-full h-full object-cover object-top"
                   loading="lazy"
-                  style={{ maxHeight: "500px", objectPosition: "top" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
               </div>
 
-              <div className="absolute -right-4 top-1/3 glass rounded-2xl p-4 border border-primary/20 shadow-xl">
-                <div className="text-2xl font-black gradient-text">{d.yearsLabel || "2+"}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">Years of<br />Building Stuff</div>
+              <div className="absolute -right-3 sm:-right-6 top-1/4 glass rounded-2xl p-3 border border-primary/20 shadow-xl">
+                <div className="text-xl font-black gradient-text">{d.yearsLabel || "2+"}</div>
+                <div className="text-xs text-muted-foreground mt-0.5 leading-tight">Years of<br />Building</div>
               </div>
             </div>
           </motion.div>
