@@ -67,13 +67,14 @@ export default function BlogEditor() {
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [editorReady, setEditorReady] = useState(false);
 
-  const { data: posts = [] } = useQuery<BlogPost[]>({
+  const { data: posts = [], isLoading: postsLoading } = useQuery<BlogPost[]>({
     queryKey: ["admin-posts"],
     queryFn: () => api.admin.blog.list(),
     enabled: !isNew,
   });
 
   const post = posts.find(p => p.id === postId);
+  const postLoaded = isNew || (!postsLoading && !!post);
 
   const editor = useEditor({
     extensions: [
@@ -165,6 +166,33 @@ export default function BlogEditor() {
 
   const saving = createMutation.isPending || updateMutation.isPending;
 
+  if (!isNew && postsLoading) {
+    return (
+      <div className="max-w-4xl">
+        <button onClick={() => navigate("/admin/blog")} className="flex items-center gap-2 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors mb-4">
+          <ArrowLeft className="w-4 h-4" />Back
+        </button>
+        <div className="glass rounded-2xl border border-white/10 p-12 flex items-center justify-center">
+          <div className="text-muted-foreground text-sm">Loading post…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isNew && !postsLoading && !post) {
+    return (
+      <div className="max-w-4xl">
+        <button onClick={() => navigate("/admin/blog")} className="flex items-center gap-2 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors mb-4">
+          <ArrowLeft className="w-4 h-4" />Back
+        </button>
+        <div className="glass rounded-2xl border border-white/10 p-12 text-center">
+          <div className="text-foreground font-semibold mb-2">Post not found</div>
+          <div className="text-muted-foreground text-sm">The post you're looking for doesn't exist.</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl space-y-5">
       {toast && (
@@ -181,14 +209,15 @@ export default function BlogEditor() {
         <div className="flex-1" />
         <button
           onClick={() => setForm(f => ({ ...f, published: !f.published }))}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${form.published ? "bg-green-500/15 border-green-500/20 text-green-400 hover:bg-green-500/20" : "border-border text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
+          disabled={!postLoaded}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-colors disabled:opacity-50 ${form.published ? "bg-green-500/15 border-green-500/20 text-green-400 hover:bg-green-500/20" : "border-border text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
         >
           {form.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
           {form.published ? "Published" : "Draft"}
         </button>
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !postLoaded}
           className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60"
         >
           <Save className="w-4 h-4" />
