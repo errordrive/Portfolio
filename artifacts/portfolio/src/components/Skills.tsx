@@ -30,17 +30,23 @@ function getCategoryColor(category: string) {
   return CATEGORY_COLORS[category] ?? DEFAULT_COLOR;
 }
 
-export default function Skills() {
+interface SkillsProps {
+  data?: SkillsData;
+  visible?: boolean;
+}
+
+export default function Skills({ data: dataProp, visible: visibleProp }: SkillsProps = {}) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const { data: content, isLoading } = useContent();
 
-  if (isLoading && !content) return <SkeletonSection height="380px" />;
+  if (isLoading && !content && !dataProp) return <SkeletonSection height="380px" />;
 
   const section = content?.skills;
-  if (section?.visible === false) return null;
+  const isVisible = visibleProp !== undefined ? visibleProp : section?.visible;
+  if (isVisible === false) return null;
 
-  const d: SkillsData = section?.data ?? DEFAULT_SKILLS_DATA;
+  const d: SkillsData = dataProp ?? section?.data ?? DEFAULT_SKILLS_DATA;
   const skills = d.skills?.length ? d.skills : DEFAULT_SKILLS;
 
   const categories = Array.from(new Set(skills.map((s) => s.category)));

@@ -25,17 +25,23 @@ const CATEGORY_COLORS = [
 
 const PROJECT_EMOJIS = ["📚", "🔍", "🌐", "🤖", "🔐", "🎨", "⚡", "🛠️", "🎯", "🚀"];
 
-export default function Projects() {
+interface ProjectsProps {
+  data?: ProjectsData;
+  visible?: boolean;
+}
+
+export default function Projects({ data: dataProp, visible: visibleProp }: ProjectsProps = {}) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const { data: content, isLoading } = useContent();
 
-  if (isLoading && !content) return <SkeletonSection height="500px" />;
+  if (isLoading && !content && !dataProp) return <SkeletonSection height="500px" />;
 
   const section = content?.projects;
-  if (section?.visible === false) return null;
+  const isVisible = visibleProp !== undefined ? visibleProp : section?.visible;
+  if (isVisible === false) return null;
 
-  const d: ProjectsData = section?.data ?? DEFAULT_PROJECTS_DATA;
+  const d: ProjectsData = dataProp ?? section?.data ?? DEFAULT_PROJECTS_DATA;
   const projects = d.projects?.length ? d.projects : DEFAULT_PROJECTS;
 
   return (

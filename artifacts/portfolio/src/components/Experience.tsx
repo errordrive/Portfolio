@@ -14,17 +14,23 @@ const DEFAULT_TIMELINE: TimelineEntry[] = [
 
 const DEFAULT_EXPERIENCE_DATA: ExperienceData = { timeline: DEFAULT_TIMELINE };
 
-export default function Experience() {
+interface ExperienceProps {
+  data?: ExperienceData;
+  visible?: boolean;
+}
+
+export default function Experience({ data: dataProp, visible: visibleProp }: ExperienceProps = {}) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   const { data: content, isLoading } = useContent();
 
-  if (isLoading && !content) return <SkeletonSection height="500px" />;
+  if (isLoading && !content && !dataProp) return <SkeletonSection height="500px" />;
 
   const section = content?.experience;
-  if (section?.visible === false) return null;
+  const isVisible = visibleProp !== undefined ? visibleProp : section?.visible;
+  if (isVisible === false) return null;
 
-  const d: ExperienceData = section?.data ?? DEFAULT_EXPERIENCE_DATA;
+  const d: ExperienceData = dataProp ?? section?.data ?? DEFAULT_EXPERIENCE_DATA;
   const timeline = d.timeline?.length ? d.timeline : DEFAULT_TIMELINE;
 
   return (

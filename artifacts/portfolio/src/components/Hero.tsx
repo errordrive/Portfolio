@@ -39,16 +39,22 @@ const ROLE_COLORS = [
   { bg: "rgba(59,130,246,0.15)", color: "#3b82f6", border: "rgba(59,130,246,0.3)" },
 ];
 
-export default function Hero() {
+interface HeroProps {
+  data?: HeroData;
+  visible?: boolean;
+}
+
+export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps = {}) {
   const { data: content, isLoading } = useContent();
   const { cvUrl } = useSiteSettings();
 
-  if (isLoading && !content) return <SkeletonHero />;
+  if (isLoading && !content && !dataProp) return <SkeletonHero />;
 
   const section = content?.hero;
-  if (section?.visible === false) return null;
+  const isVisible = visibleProp !== undefined ? visibleProp : section?.visible;
+  if (isVisible === false) return null;
 
-  const d: HeroData = section?.data ?? DEFAULT_HERO;
+  const d: HeroData = dataProp ?? section?.data ?? DEFAULT_HERO;
   const roles = d.roles?.length ? d.roles : DEFAULT_ROLES;
 
   const cvHref = cvUrl || d.ctaSecondary.href || "mailto:nayem@nayem.me?subject=CV%20Request";

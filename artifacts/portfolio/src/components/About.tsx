@@ -25,17 +25,23 @@ const DEFAULT_ABOUT: AboutData = {
   highlights: DEFAULT_HIGHLIGHTS,
 };
 
-export default function About() {
+interface AboutProps {
+  data?: AboutData;
+  visible?: boolean;
+}
+
+export default function About({ data: dataProp, visible: visibleProp }: AboutProps = {}) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const { data: content, isLoading } = useContent();
 
-  if (isLoading && !content) return <SkeletonSection height="500px" />;
+  if (isLoading && !content && !dataProp) return <SkeletonSection height="500px" />;
 
   const section = content?.about;
-  if (section?.visible === false) return null;
+  const isVisible = visibleProp !== undefined ? visibleProp : section?.visible;
+  if (isVisible === false) return null;
 
-  const d: AboutData = section?.data ?? DEFAULT_ABOUT;
+  const d: AboutData = dataProp ?? section?.data ?? DEFAULT_ABOUT;
   const highlights = d.highlights?.length ? d.highlights : DEFAULT_HIGHLIGHTS;
   const bio = d.bio?.length ? d.bio : DEFAULT_ABOUT.bio;
 
