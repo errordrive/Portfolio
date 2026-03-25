@@ -1,5 +1,5 @@
-import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { useState } from "react";
 import { Send, Github, Linkedin, Twitter, MessageCircle, Mail, MapPin, ExternalLink, CheckCircle, AlertCircle } from "lucide-react";
 import { api } from "../lib/api";
 import { useContent } from "../hooks/useContent";
@@ -27,6 +27,8 @@ const DEFAULT_CONTACT: ContactData = {
   socials: DEFAULT_SOCIALS,
 };
 
+const VP = { once: true, amount: 0.05 } as const;
+
 type FormStatus = "idle" | "sending" | "success" | "error";
 
 interface ContactProps {
@@ -35,8 +37,6 @@ interface ContactProps {
 }
 
 export default function Contact({ data: dataProp, visible: visibleProp }: ContactProps = {}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.05 });
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -84,10 +84,11 @@ export default function Contact({ data: dataProp, visible: visibleProp }: Contac
       <div className="absolute inset-0 grid-bg opacity-15" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/8 rounded-full blur-3xl" />
 
-      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VP}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
@@ -103,7 +104,8 @@ export default function Contact({ data: dataProp, visible: visibleProp }: Contac
         <div className="grid lg:grid-cols-2 gap-12">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={VP}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <div className="glass rounded-2xl p-8 border border-border/50 h-full">
@@ -147,8 +149,9 @@ export default function Contact({ data: dataProp, visible: visibleProp }: Contac
                         target="_blank"
                         rel="noopener noreferrer"
                         initial={{ opacity: 0, y: 10 }}
-                        animate={inView ? { opacity: 1, y: 0 } : {}}
-                        transition={{ duration: 0.4, delay: 0.3 + i * 0.08 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={VP}
+                        transition={{ duration: 0.4, delay: i * 0.08 }}
                         whileHover={{ scale: 1.04, y: -2 }}
                         className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl glass border border-border/50 hover:border-primary/30 transition-all group"
                       >
@@ -165,7 +168,8 @@ export default function Contact({ data: dataProp, visible: visibleProp }: Contac
 
           <motion.div
             initial={{ opacity: 0, x: 30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={VP}
             transition={{ duration: 0.6, delay: 0.15 }}
           >
             <form onSubmit={handleSubmit} className="glass rounded-2xl p-8 border border-border/50 space-y-5">

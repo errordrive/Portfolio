@@ -1,5 +1,4 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { Zap, Bot, Smartphone, Rocket, Star } from "lucide-react";
 import { useContent } from "../hooks/useContent";
 import SkeletonSection from "./SkeletonSection";
@@ -25,14 +24,14 @@ const DEFAULT_ABOUT: AboutData = {
   highlights: DEFAULT_HIGHLIGHTS,
 };
 
+const VP = { once: true, amount: 0.05 } as const;
+
 interface AboutProps {
   data?: AboutData;
   visible?: boolean;
 }
 
 export default function About({ data: dataProp, visible: visibleProp }: AboutProps = {}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.05 });
   const { data: content, isLoading } = useContent();
 
   if (isLoading && !content && !dataProp) return <SkeletonSection height="500px" />;
@@ -49,12 +48,13 @@ export default function About({ data: dataProp, visible: visibleProp }: AboutPro
     <section id="about" className="relative py-24 lg:py-32 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/3 to-transparent" />
 
-      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
 
           <motion.div
             initial={{ opacity: 0, x: -30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={VP}
             transition={{ duration: 0.5 }}
             className="relative"
           >
@@ -82,7 +82,8 @@ export default function About({ data: dataProp, visible: visibleProp }: AboutPro
 
           <motion.div
             initial={{ opacity: 0, x: 30 }}
-            animate={inView ? { opacity: 1, x: 0 } : {}}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={VP}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <span className="text-primary text-sm font-semibold tracking-widest uppercase">About Me</span>
@@ -103,8 +104,9 @@ export default function About({ data: dataProp, visible: visibleProp }: AboutPro
                   <motion.div
                     key={h.title}
                     initial={{ opacity: 0, y: 15 }}
-                    animate={inView ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.4, delay: 0.25 + i * 0.08 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={VP}
+                    transition={{ duration: 0.4, delay: i * 0.08 }}
                     className="glass rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-colors"
                   >
                     <div

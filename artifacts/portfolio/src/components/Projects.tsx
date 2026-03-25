@@ -1,5 +1,4 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { ExternalLink, Github, ArrowRight } from "lucide-react";
 import { useContent } from "../hooks/useContent";
 import SkeletonSection from "./SkeletonSection";
@@ -25,14 +24,14 @@ const CATEGORY_COLORS = [
 
 const PROJECT_EMOJIS = ["📚", "🔍", "🌐", "🤖", "🔐", "🎨", "⚡", "🛠️", "🎯", "🚀"];
 
+const VP = { once: true, amount: 0.05 } as const;
+
 interface ProjectsProps {
   data?: ProjectsData;
   visible?: boolean;
 }
 
 export default function Projects({ data: dataProp, visible: visibleProp }: ProjectsProps = {}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.05 });
   const { data: content, isLoading } = useContent();
 
   if (isLoading && !content && !dataProp) return <SkeletonSection height="500px" />;
@@ -46,10 +45,11 @@ export default function Projects({ data: dataProp, visible: visibleProp }: Proje
 
   return (
     <section id="projects" className="relative py-24 lg:py-32">
-      <div ref={ref} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VP}
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
@@ -70,7 +70,8 @@ export default function Projects({ data: dataProp, visible: visibleProp }: Proje
               <motion.div
                 key={project.title}
                 initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={VP}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 className="glass rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 transition-colors group"
@@ -136,8 +137,9 @@ export default function Projects({ data: dataProp, visible: visibleProp }: Proje
 
         <motion.div
           initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          whileInView={{ opacity: 1 }}
+          viewport={VP}
+          transition={{ duration: 0.5, delay: 0.2 }}
           className="text-center mt-12"
         >
           <a

@@ -1,5 +1,4 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { useContent } from "../hooks/useContent";
 import SkeletonSection from "./SkeletonSection";
 import type { Skill, SkillsData } from "../lib/api";
@@ -26,6 +25,8 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
 
 const DEFAULT_COLOR = { bg: "rgba(100,116,139,0.12)", text: "#64748b", border: "rgba(100,116,139,0.25)" };
 
+const VP = { once: true, amount: 0.05 } as const;
+
 function getCategoryColor(category: string) {
   return CATEGORY_COLORS[category] ?? DEFAULT_COLOR;
 }
@@ -36,8 +37,6 @@ interface SkillsProps {
 }
 
 export default function Skills({ data: dataProp, visible: visibleProp }: SkillsProps = {}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.05 });
   const { data: content, isLoading } = useContent();
 
   if (isLoading && !content && !dataProp) return <SkeletonSection height="380px" />;
@@ -53,10 +52,11 @@ export default function Skills({ data: dataProp, visible: visibleProp }: SkillsP
 
   return (
     <section id="skills" className="relative py-24 lg:py-32 overflow-hidden">
-      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VP}
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
@@ -91,7 +91,8 @@ export default function Skills({ data: dataProp, visible: visibleProp }: SkillsP
               <motion.div
                 key={skill.name}
                 initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={VP}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
                 whileHover={{ y: -3, transition: { duration: 0.15 } }}
                 className="glass rounded-2xl p-5 border border-border/50 hover:border-primary/30 transition-colors"
@@ -117,8 +118,9 @@ export default function Skills({ data: dataProp, visible: visibleProp }: SkillsP
                 <div className="h-1.5 bg-border/50 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={inView ? { width: `${skill.level}%` } : {}}
-                    transition={{ duration: 0.8, delay: 0.3 + i * 0.05, ease: "easeOut" }}
+                    whileInView={{ width: `${skill.level}%` }}
+                    viewport={VP}
+                    transition={{ duration: 0.8, delay: 0.2 + i * 0.05, ease: "easeOut" }}
                     className="h-full rounded-full"
                     style={{ background: `linear-gradient(90deg, ${c.text}, ${c.text}80)` }}
                   />

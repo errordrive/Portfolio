@@ -1,5 +1,4 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion } from "framer-motion";
 import { useContent } from "../hooks/useContent";
 import SkeletonSection from "./SkeletonSection";
 import type { TimelineEntry, ExperienceData } from "../lib/api";
@@ -14,14 +13,14 @@ const DEFAULT_TIMELINE: TimelineEntry[] = [
 
 const DEFAULT_EXPERIENCE_DATA: ExperienceData = { timeline: DEFAULT_TIMELINE };
 
+const VP = { once: true, amount: 0.05 } as const;
+
 interface ExperienceProps {
   data?: ExperienceData;
   visible?: boolean;
 }
 
 export default function Experience({ data: dataProp, visible: visibleProp }: ExperienceProps = {}) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.05 });
   const { data: content, isLoading } = useContent();
 
   if (isLoading && !content && !dataProp) return <SkeletonSection height="500px" />;
@@ -37,10 +36,11 @@ export default function Experience({ data: dataProp, visible: visibleProp }: Exp
     <section id="experience" className="relative py-24 lg:py-32">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/3 to-transparent" />
 
-      <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={VP}
           transition={{ duration: 0.5 }}
           className="text-center mb-14"
         >
@@ -61,8 +61,9 @@ export default function Experience({ data: dataProp, visible: visibleProp }: Exp
               <motion.div
                 key={entry.year + entry.title}
                 initial={{ opacity: 0, x: -20 }}
-                animate={inView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={VP}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
                 className="relative pl-20"
               >
                 <div
