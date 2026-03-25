@@ -89,6 +89,12 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
               <span className="gradient-text neon-text-glow">{d.name}</span>
             </motion.h1>
 
+            {d.tagline && (
+              <motion.p variants={item} className="text-xl sm:text-2xl font-semibold text-foreground/80 mb-4 max-w-lg">
+                {d.tagline}
+              </motion.p>
+            )}
+
             <motion.div variants={item} className="mb-6">
               <div className="flex flex-wrap gap-2 mb-4">
                 {roles.map((role, i) => {

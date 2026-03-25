@@ -14,7 +14,11 @@ const socials = [
 
 type FormStatus = "idle" | "sending" | "success" | "error";
 
-export default function Contact() {
+interface ContactProps {
+  visible?: boolean;
+}
+
+export default function Contact({ visible: visibleProp }: ContactProps = {}) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
@@ -22,8 +26,9 @@ export default function Contact() {
   const [errorMsg, setErrorMsg] = useState("");
   const { data: content, isLoading: contentLoading } = useContent();
 
-  if (contentLoading && !content) return <SkeletonSection height="400px" />;
-  if (content?.contact?.visible === false) return null;
+  if (contentLoading && !content && visibleProp === undefined) return <SkeletonSection height="400px" />;
+  const isVisible = visibleProp !== undefined ? visibleProp : content?.contact?.visible;
+  if (isVisible === false) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
