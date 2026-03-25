@@ -281,10 +281,13 @@ export async function seedDatabase() {
       .onConflictDoNothing();
   }
 
-  const existingCv = await db.select().from(cvFile).limit(1);
-  if (existingCv.length === 0) {
-    await db.insert(cvFile).values({ url: "" });
-  } else if (existingCv[0].url && existingCv[0].url.includes("example.com")) {
-    await db.update(cvFile).set({ url: "" }).where(sql`url LIKE '%example.com%'`);
-  }
+  await db
+    .insert(cvFile)
+    .values({ id: 1, url: "" })
+    .onConflictDoUpdate({
+      target: cvFile.id,
+      set: {
+        url: sql`CASE WHEN cv_file.url LIKE '%example.com%' THEN '' ELSE cv_file.url END`,
+      },
+    });
 }
