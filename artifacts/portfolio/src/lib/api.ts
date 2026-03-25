@@ -255,6 +255,10 @@ export interface ContentSection<T> {
   updatedAt?: string;
 }
 
+export interface ContactData {
+  visible?: boolean;
+}
+
 /** Shape returned by GET /admin/content */
 export interface AllContent {
   hero?: ContentSection<HeroData>;
@@ -262,6 +266,7 @@ export interface AllContent {
   skills?: ContentSection<SkillsData>;
   experience?: ContentSection<ExperienceData>;
   projects?: ContentSection<ProjectsData>;
+  contact?: ContentSection<ContactData>;
 }
 
 /** Shape returned by GET /content (public, partial overlap) */

@@ -6,8 +6,10 @@ import { ArrowLeft, Search, Calendar, Clock, Tag } from "lucide-react";
 import { api } from "../lib/api";
 import type { BlogPost } from "../lib/api";
 
-function readingTime(html: string): number {
-  const text = html.replace(/<[^>]*>/g, "");
+function readingTime(html: string | null | undefined, fallback?: string): number {
+  const source = html ?? fallback ?? "";
+  if (!source) return 1;
+  const text = source.replace(/<[^>]*>/g, "");
   const words = text.split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 200));
 }
@@ -17,7 +19,7 @@ function formatDate(iso: string) {
 }
 
 function PostCard({ post, i }: { post: BlogPost; i: number }) {
-  const minutes = readingTime(post.content);
+  const minutes = readingTime(post.content, post.excerpt);
 
   return (
     <motion.div

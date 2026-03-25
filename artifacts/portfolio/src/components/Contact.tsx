@@ -2,6 +2,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { Send, Github, Linkedin, Twitter, MessageCircle, Mail, MapPin, ExternalLink, CheckCircle, AlertCircle } from "lucide-react";
 import { api } from "../lib/api";
+import { useContent } from "../hooks/useContent";
 
 const socials = [
   { icon: Github, label: "GitHub", href: "https://github.com", color: "#e2e8f0" },
@@ -18,6 +19,9 @@ export default function Contact() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const { data: content } = useContent();
+
+  if (content?.contact?.visible === false) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
