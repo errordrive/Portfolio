@@ -4,6 +4,25 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## Admin Panel (CMS Dashboard)
+
+The portfolio includes a full admin CMS accessible at `/admin`:
+
+- **Login**: `/admin/login` — JWT auth (admin/admin123), token in localStorage as `cms_token`
+- **Dashboard**: `/admin/dashboard` — stats (posts, messages, projects)
+- **Content Manager**: `/admin/content` — tabs for Hero, About, Skills, Experience, Projects
+- **Blog**: `/admin/blog`, `/admin/blog/new`, `/admin/blog/:id/edit` — TipTap rich text editor
+- **Messages**: `/admin/messages` — view/read/delete contact form submissions
+- **Settings**: `/admin/settings` — site meta, social links, CV URL, AdSense global script
+- **Password**: `/admin/password` — change admin password
+
+Key files:
+- `artifacts/portfolio/src/lib/api.ts` — typed API client (fetch wrapper with JWT headers, base `/api`)
+- `artifacts/portfolio/src/pages/admin/` — all admin page components
+- `artifacts/portfolio/vite.config.ts` — proxies `/api/*` → `http://localhost:8080`
+
+Routing uses wouter (already installed). Admin is lazy-loaded (separate chunk) for performance.
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces

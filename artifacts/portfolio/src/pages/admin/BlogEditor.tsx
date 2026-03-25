@@ -1,0 +1,326 @@
+import { useEffect, useState, useCallback } from "react";
+import { useLocation, useRoute } from "wouter";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
+import { api, type BlogPost } from "@/lib/api";
+import {
+  ArrowLeft, Save, Eye, EyeOff,
+  Bold, Italic, Heading1, Heading2, Heading3,
+  List, ListOrdered, Code, Link2, ImageIcon, Quote,
+  Undo2, Redo2, CheckCircle
+} from "lucide-react";
+
+function slugify(str: string) {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function ToolbarBtn({ active, onClick, title, children }: { active?: boolean; onClick: () => void; title: string; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onMouseDown={e => { e.preventDefault(); onClick(); }}
+      title={title}
+      className={`p-1.5 rounded-lg text-sm transition-colors ${active ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground hover:bg-white/10"}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+export default function BlogEditor() {
+  const [, navigate] = useLocation();
+  const [matchEdit, paramsEdit] = useRoute("/admin/blog/:id/edit");
+  const isNew = !matchEdit;
+  const postId = matchEdit ? Number(paramsEdit!.id) : null;
+
+  const [form, setForm] = useState({
+    title: "",
+    slug: "",
+    excerpt: "",
+    featuredImage: "",
+    tags: "",
+    metaTitle: "",
+    metaDescription: "",
+    published: false,
+    adsEnabled: false,
+    adTop: false,
+    adMiddle: false,
+    adBottom: false,
+    adScript: "",
+  });
+  const [loading, setLoading] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [autoSlug, setAutoSlug] = useState(isNew);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({ openOnClick: false }),
+      Image,
+      Placeholder.configure({ placeholder: "Write your post…" }),
+    ],
+    editorProps: {
+      attributes: {
+        class: "prose prose-invert max-w-none min-h-[300px] px-4 py-4 focus:outline-none text-foreground text-sm leading-relaxed",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!postId) return;
+    api.admin.blog.list().then(posts => {
+      const post = posts.find(p => p.id === postId);
+      if (!post) { navigate("/admin/blog"); return; }
+      setForm({
+        title: post.title,
+        slug: post.slug,
+        excerpt: post.excerpt || "",
+        featuredImage: post.featuredImage || "",
+        tags: (post.tags || []).join(", "),
+        metaTitle: post.metaTitle || "",
+        metaDescription: post.metaDescription || "",
+        published: post.published,
+        adsEnabled: post.adsEnabled || false,
+        adTop: post.adTop || false,
+        adMiddle: post.adMiddle || false,
+        adBottom: post.adBottom || false,
+        adScript: post.adScript || "",
+      });
+      if (editor && post.content) editor.commands.setContent(post.content);
+      setAutoSlug(false);
+    }).catch(() => navigate("/admin/blog")).finally(() => setLoading(false));
+  }, [postId, editor]);
+
+  function handleTitleChange(title: string) {
+    setForm(f => ({ ...f, title, slug: autoSlug ? slugify(title) : f.slug }));
+  }
+
+  function showToast(type: "success" | "error", msg: string) {
+    setToast({ type, msg });
+    setTimeout(() => setToast(null), 3500);
+  }
+
+  async function handleSave() {
+    if (!form.title.trim()) return showToast("error", "Title is required");
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
+        content: editor?.getHTML() ?? "",
+      };
+      if (isNew) {
+        await api.admin.blog.create(payload);
+        showToast("success", "Post created");
+        setTimeout(() => navigate("/admin/blog"), 800);
+      } else {
+        await api.admin.blog.update(postId!, payload);
+        showToast("success", "Post saved");
+      }
+    } catch (e: unknown) {
+      showToast("error", e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const setLink = useCallback(() => {
+    const url = prompt("URL:");
+    if (!url) return;
+    editor?.chain().focus().setLink({ href: url }).run();
+  }, [editor]);
+
+  const setImage = useCallback(() => {
+    const url = prompt("Image URL:");
+    if (!url) return;
+    editor?.chain().focus().setImage({ src: url }).run();
+  }, [editor]);
+
+  if (loading) return <div className="text-muted-foreground text-sm">Loading…</div>;
+
+  return (
+    <div className="max-w-4xl space-y-5">
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium ${toast.type === "success" ? "bg-green-500/15 border-green-500/20 text-green-400" : "bg-red-500/15 border-red-500/20 text-red-400"}`}>
+          {toast.type === "success" && <CheckCircle className="w-4 h-4" />}
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <button onClick={() => navigate("/admin/blog")} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <div className="flex-1" />
+        <button
+          onClick={() => { setForm(f => ({ ...f, published: !f.published })); }}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${form.published ? "bg-green-500/15 border-green-500/20 text-green-400 hover:bg-green-500/20" : "border-border text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
+        >
+          {form.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          {form.published ? "Published" : "Draft"}
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60"
+        >
+          <Save className="w-4 h-4" />
+          {saving ? "Saving…" : "Save"}
+        </button>
+      </div>
+
+      {/* Main grid */}
+      <div className="grid lg:grid-cols-[1fr_280px] gap-5">
+        {/* Left: Content */}
+        <div className="space-y-4">
+          {/* Title */}
+          <input
+            type="text"
+            value={form.title}
+            onChange={e => handleTitleChange(e.target.value)}
+            placeholder="Post title…"
+            className="w-full px-4 py-3 rounded-xl bg-card border border-white/10 text-foreground text-xl font-bold placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-all"
+          />
+
+          {/* Slug */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground shrink-0">Slug:</span>
+            <input
+              type="text"
+              value={form.slug}
+              onChange={e => { setAutoSlug(false); setForm(f => ({ ...f, slug: e.target.value })); }}
+              className="flex-1 px-3 py-1.5 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all"
+            />
+          </div>
+
+          {/* TipTap Editor */}
+          <div className="glass rounded-2xl border border-white/10 overflow-hidden">
+            {/* Toolbar */}
+            <div className="flex items-center gap-0.5 px-3 py-2 border-b border-white/10 flex-wrap">
+              <ToolbarBtn active={editor?.isActive("bold")} onClick={() => editor?.chain().focus().toggleBold().run()} title="Bold"><Bold className="w-3.5 h-3.5" /></ToolbarBtn>
+              <ToolbarBtn active={editor?.isActive("italic")} onClick={() => editor?.chain().focus().toggleItalic().run()} title="Italic"><Italic className="w-3.5 h-3.5" /></ToolbarBtn>
+              <div className="w-px h-4 bg-border mx-1" />
+              <ToolbarBtn active={editor?.isActive("heading", { level: 1 })} onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} title="H1"><Heading1 className="w-3.5 h-3.5" /></ToolbarBtn>
+              <ToolbarBtn active={editor?.isActive("heading", { level: 2 })} onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} title="H2"><Heading2 className="w-3.5 h-3.5" /></ToolbarBtn>
+              <ToolbarBtn active={editor?.isActive("heading", { level: 3 })} onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()} title="H3"><Heading3 className="w-3.5 h-3.5" /></ToolbarBtn>
+              <div className="w-px h-4 bg-border mx-1" />
+              <ToolbarBtn active={editor?.isActive("bulletList")} onClick={() => editor?.chain().focus().toggleBulletList().run()} title="Bullet List"><List className="w-3.5 h-3.5" /></ToolbarBtn>
+              <ToolbarBtn active={editor?.isActive("orderedList")} onClick={() => editor?.chain().focus().toggleOrderedList().run()} title="Ordered List"><ListOrdered className="w-3.5 h-3.5" /></ToolbarBtn>
+              <div className="w-px h-4 bg-border mx-1" />
+              <ToolbarBtn active={editor?.isActive("blockquote")} onClick={() => editor?.chain().focus().toggleBlockquote().run()} title="Blockquote"><Quote className="w-3.5 h-3.5" /></ToolbarBtn>
+              <ToolbarBtn active={editor?.isActive("codeBlock")} onClick={() => editor?.chain().focus().toggleCodeBlock().run()} title="Code Block"><Code className="w-3.5 h-3.5" /></ToolbarBtn>
+              <ToolbarBtn active={editor?.isActive("link")} onClick={setLink} title="Link"><Link2 className="w-3.5 h-3.5" /></ToolbarBtn>
+              <ToolbarBtn onClick={setImage} title="Image"><ImageIcon className="w-3.5 h-3.5" /></ToolbarBtn>
+              <div className="w-px h-4 bg-border mx-1" />
+              <ToolbarBtn onClick={() => editor?.chain().focus().undo().run()} title="Undo"><Undo2 className="w-3.5 h-3.5" /></ToolbarBtn>
+              <ToolbarBtn onClick={() => editor?.chain().focus().redo().run()} title="Redo"><Redo2 className="w-3.5 h-3.5" /></ToolbarBtn>
+            </div>
+            <EditorContent editor={editor} />
+          </div>
+        </div>
+
+        {/* Right: Meta */}
+        <div className="space-y-4">
+          {/* Featured Image */}
+          <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Featured Image</h3>
+            <input
+              type="url"
+              value={form.featuredImage}
+              onChange={e => setForm(f => ({ ...f, featuredImage: e.target.value }))}
+              placeholder="https://…"
+              className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+            />
+            {form.featuredImage && (
+              <img src={form.featuredImage} alt="" className="w-full h-32 object-cover rounded-lg" onError={e => (e.currentTarget.style.display = "none")} />
+            )}
+          </div>
+
+          {/* Tags & Excerpt */}
+          <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Details</h3>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Tags (comma-separated)</label>
+              <input
+                type="text"
+                value={form.tags}
+                onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
+                placeholder="ai, coding, tools"
+                className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Excerpt</label>
+              <textarea
+                rows={3}
+                value={form.excerpt}
+                onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))}
+                placeholder="Short summary…"
+                className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all resize-none"
+              />
+            </div>
+          </div>
+
+          {/* SEO */}
+          <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">SEO</h3>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Meta Title</label>
+              <input
+                type="text"
+                value={form.metaTitle}
+                onChange={e => setForm(f => ({ ...f, metaTitle: e.target.value }))}
+                placeholder={form.title}
+                className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Meta Description</label>
+              <textarea
+                rows={2}
+                value={form.metaDescription}
+                onChange={e => setForm(f => ({ ...f, metaDescription: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all resize-none"
+              />
+            </div>
+          </div>
+
+          {/* AdSense */}
+          <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">AdSense</h3>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={form.adsEnabled} onChange={e => setForm(f => ({ ...f, adsEnabled: e.target.checked }))} className="accent-primary" />
+                <span className="text-xs text-foreground">Enable Ads</span>
+              </label>
+            </div>
+            {form.adsEnabled && (
+              <>
+                <div className="flex gap-3 flex-wrap">
+                  {(["adTop", "adMiddle", "adBottom"] as const).map(k => (
+                    <label key={k} className="flex items-center gap-1.5 cursor-pointer text-xs text-muted-foreground">
+                      <input type="checkbox" checked={form[k]} onChange={e => setForm(f => ({ ...f, [k]: e.target.checked }))} className="accent-primary" />
+                      {k === "adTop" ? "Top" : k === "adMiddle" ? "Middle" : "Bottom"}
+                    </label>
+                  ))}
+                </div>
+                <textarea
+                  rows={3}
+                  value={form.adScript}
+                  onChange={e => setForm(f => ({ ...f, adScript: e.target.value }))}
+                  placeholder="<script …></script>"
+                  className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-xs font-mono placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-all resize-none"
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
