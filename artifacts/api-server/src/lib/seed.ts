@@ -3,6 +3,7 @@ import {
   adminUsers,
   siteSettings,
   contentSections,
+  blogPosts,
   cvFile,
 } from "@workspace/db";
 import bcrypt from "bcryptjs";
@@ -10,7 +11,7 @@ import { sql } from "drizzle-orm";
 
 const DEFAULT_HERO = {
   name: "Nayem",
-  tagline: "Hi, I'm Nayem",
+  tagline: "Building with AI · Shipping things fast · Exploring Android",
   body: "I get ideas off the ground fast — using AI as my superpower. I don't just write code, I vibe with it. Building cool stuff, exploring Android internals, and letting AI do the heavy lifting.",
   roles: ["Vibe Coder", "AI-Powered Builder", "Android RE Explorer"],
   stats: [
@@ -19,7 +20,7 @@ const DEFAULT_HERO = {
     { label: "Apps Explored", value: "50+" },
   ],
   ctaPrimary: { label: "View Work", href: "#projects" },
-  ctaSecondary: { label: "Download CV", href: "#cv" },
+  ctaSecondary: { label: "Download CV", href: "" },
   statusBadge: "Open to collaborate",
 };
 
@@ -73,14 +74,104 @@ const DEFAULT_PROJECTS = {
   ],
 };
 
+const DEFAULT_CONTACT = {
+  bio: "Whether you need an AI solution, want to reverse engineer something, or just want to vibe-code together — I'm just a message away.",
+  email: "nayem@nayem.me",
+  location: "Bangladesh 🇧🇩",
+  socials: [
+    { platform: "github", label: "GitHub", href: "https://github.com/nayem" },
+    { platform: "linkedin", label: "LinkedIn", href: "https://linkedin.com/in/nayem" },
+    { platform: "twitter", label: "Twitter/X", href: "https://twitter.com/nayem" },
+    { platform: "telegram", label: "Telegram", href: "https://t.me/nayem" },
+  ],
+};
+
 const DEFAULT_SETTINGS = [
   { key: "site_title", value: "Nayem — Vibe Coder" },
   { key: "site_description", value: "Self-taught builder who uses AI smartly to ship things fast. Vibe Coder, AI user, Android RE explorer." },
-  { key: "social_github", value: "https://github.com" },
-  { key: "social_linkedin", value: "https://linkedin.com" },
+  { key: "social_github", value: "https://github.com/nayem" },
+  { key: "social_linkedin", value: "https://linkedin.com/in/nayem" },
   { key: "social_twitter", value: "" },
   { key: "adsense_publisher_id", value: "" },
   { key: "adsense_enabled", value: "false" },
+];
+
+const SAMPLE_BLOG_POSTS = [
+  {
+    title: "What is Vibe Coding? My Approach to Building with AI",
+    slug: "what-is-vibe-coding",
+    excerpt: "Vibe Coding isn't just a buzzword — it's a whole different mindset for building software. Here's how I use AI to ship faster than ever.",
+    content: `<h2>The Idea Behind Vibe Coding</h2>
+<p>Vibe Coding is the art of building software by describing what you want, letting AI generate the heavy lifting, and staying in the creative flow rather than getting bogged down in boilerplate.</p>
+<p>I didn't invent the term — but I've made it my whole identity. I use tools like <strong>ChatGPT</strong>, <strong>Claude</strong>, and <strong>Cursor</strong> to ship projects in days that used to take months.</p>
+<h2>How It Works in Practice</h2>
+<p>The process is simple:</p>
+<ol>
+<li>Start with the vibe — what do I want to build and feel?</li>
+<li>Describe it to AI in plain language</li>
+<li>Iterate fast — don't overthink, just build</li>
+<li>Ship early, improve later</li>
+</ol>
+<h2>What I've Shipped</h2>
+<p>Using this approach, I've built Telegram bots, web apps, AI assistants, and more — all without being a "traditional" developer. The tools do the syntax. I do the thinking.</p>
+<p>If you're curious about trying Vibe Coding, start small. Pick something you actually want, describe it to Claude or ChatGPT, and just go. You'll be surprised how fast you ship.</p>`,
+    tags: ["Vibe Coding", "AI", "Productivity"],
+    metaTitle: "What is Vibe Coding? My Approach to Building with AI",
+    metaDescription: "Vibe Coding is building software by describing what you want and letting AI handle the boilerplate. Here's how I use it to ship faster.",
+    published: true,
+    featuredImage: "",
+  },
+  {
+    title: "Getting Started with Android Reverse Engineering: My First Steps",
+    slug: "android-re-getting-started",
+    excerpt: "I had no idea how Android apps worked under the hood. Then I picked up JADX and Frida. Here's what I learned in my first few weeks.",
+    content: `<h2>Why I Got into Android RE</h2>
+<p>I've always been curious about how things work. One day I found an app doing something I didn't understand, and instead of just wondering — I decided to look inside.</p>
+<p>Android reverse engineering (RE) is the process of analyzing Android APK files to understand what an app is actually doing. It's used by security researchers, developers, and curious tinkerers alike.</p>
+<h2>Tools I Use</h2>
+<ul>
+<li><strong>JADX</strong> — Decompiles APKs into readable Java/Kotlin code</li>
+<li><strong>Apktool</strong> — For working with resources and smali bytecode</li>
+<li><strong>Frida</strong> — Dynamic instrumentation for hooking into running apps</li>
+<li><strong>adb</strong> — Android Debug Bridge for communicating with devices</li>
+</ul>
+<h2>My First Real RE Experience</h2>
+<p>The first time I used JADX was mind-blowing. I threw in an APK and suddenly I could see all the code, the API endpoints, the string constants. It was like having x-ray vision for apps.</p>
+<p>I started with simple apps and worked my way up. Each one taught me something new about how Android works.</p>
+<h2>What to Know Before You Start</h2>
+<p>Android RE is legal for personal learning, security research, and interoperability — but never use it to bypass protections you shouldn't. The goal is learning, not harm.</p>
+<p>If you're curious, start by downloading JADX, finding a simple APK (even your own app!), and just exploring. You'll learn more in an hour of hands-on than in a week of reading.</p>`,
+    tags: ["Android", "RE", "Security", "Learning"],
+    metaTitle: "Getting Started with Android Reverse Engineering",
+    metaDescription: "A beginner's journey into Android RE using JADX, Frida, and Apktool. What I learned in my first weeks of exploring APKs.",
+    published: true,
+    featuredImage: "",
+  },
+  {
+    title: "My Favorite AI Tools in 2025 (and How I Use Them)",
+    slug: "favorite-ai-tools-2025",
+    excerpt: "ChatGPT, Claude, Cursor, Gemini — I use them all. Here's my honest breakdown of which tools I reach for and why.",
+    content: `<h2>The AI Toolkit I Actually Use</h2>
+<p>Not all AI tools are created equal — at least for my workflow. I've tried most of the major ones, and I have strong opinions about what each is good for.</p>
+<h2>Claude (Anthropic)</h2>
+<p>Claude is my go-to for <strong>writing code and reasoning through complex problems</strong>. It writes clean, production-quality code and is excellent at following long, detailed instructions without losing track.</p>
+<p>I use Claude for: refactoring code, debugging tricky issues, building new features from scratch.</p>
+<h2>ChatGPT (OpenAI)</h2>
+<p>ChatGPT is great for <strong>brainstorming, explaining concepts, and quick answers</strong>. The GPT-4 model is incredibly versatile and I use it when I need a broad, creative response.</p>
+<p>I use ChatGPT for: idea generation, learning new concepts, writing outlines.</p>
+<h2>Cursor</h2>
+<p>Cursor is a <strong>code editor with AI built in</strong>. It understands your entire codebase and can write, edit, and explain code in context. This is my primary coding environment now.</p>
+<p>I use Cursor for: day-to-day coding, refactoring across files, pair programming with AI.</p>
+<h2>Gemini (Google)</h2>
+<p>Gemini is impressive for <strong>multimodal tasks and long context</strong>. I use it when I have a huge file to process or need to analyze images alongside text.</p>
+<h2>The Bottom Line</h2>
+<p>Use the right tool for the right job. I switch between them constantly depending on what I need. The key is knowing each tool's strengths — and not being loyal to just one.</p>`,
+    tags: ["AI Tools", "Productivity", "Review"],
+    metaTitle: "My Favorite AI Tools in 2025 (and How I Use Them)",
+    metaDescription: "Claude, ChatGPT, Cursor, Gemini — an honest breakdown of which AI tools I use daily and why, from a Vibe Coder's perspective.",
+    published: true,
+    featuredImage: "",
+  },
 ];
 
 export async function runMigrations() {
@@ -163,6 +254,7 @@ export async function seedDatabase() {
     { section: "skills", data: DEFAULT_SKILLS },
     { section: "experience", data: DEFAULT_EXPERIENCE },
     { section: "projects", data: DEFAULT_PROJECTS },
+    { section: "contact", data: DEFAULT_CONTACT },
   ];
 
   for (const s of sections) {
@@ -172,8 +264,29 @@ export async function seedDatabase() {
       .onConflictDoNothing();
   }
 
+  for (const post of SAMPLE_BLOG_POSTS) {
+    await db
+      .insert(blogPosts)
+      .values({
+        title: post.title,
+        slug: post.slug,
+        content: post.content,
+        excerpt: post.excerpt,
+        featuredImage: post.featuredImage,
+        tags: post.tags,
+        metaTitle: post.metaTitle,
+        metaDescription: post.metaDescription,
+        published: post.published,
+      })
+      .onConflictDoNothing();
+  }
+
   const existingCv = await db.select().from(cvFile).limit(1);
   if (existingCv.length === 0) {
     await db.insert(cvFile).values({ url: "" });
+  } else if (existingCv[0].url && existingCv[0].url.includes("example.com")) {
+    await db
+      .update(cvFile)
+      .set({ url: "" });
   }
 }

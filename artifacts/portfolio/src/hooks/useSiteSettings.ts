@@ -18,10 +18,15 @@ export function useSiteSettings() {
     throwOnError: false,
   });
 
+  const rawCvUrl = cvData?.url ?? null;
+  const cvUrl = rawCvUrl && rawCvUrl.trim() && !rawCvUrl.includes("example.com")
+    ? rawCvUrl
+    : null;
+
   return {
     settings: settings ?? {},
     siteTitle: settings?.["site_title"] ?? "nayem.me",
-    cvUrl: cvData?.url ?? null,
+    cvUrl,
     isLoading: settingsLoading || cvLoading,
   };
 }

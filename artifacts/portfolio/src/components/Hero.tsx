@@ -57,7 +57,7 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
   const d: HeroData = dataProp ?? section?.data ?? DEFAULT_HERO;
   const roles = d.roles?.length ? d.roles : DEFAULT_ROLES;
 
-  const cvHref = cvUrl || d.ctaSecondary.href || "mailto:nayem@nayem.me?subject=CV%20Request";
+  const validCvUrl = cvUrl && !cvUrl.includes("example.com") ? cvUrl : null;
 
   return (
     <section
@@ -132,16 +132,18 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
               >
                 {d.ctaPrimary.label || "View Work"} <ArrowRight className="w-4 h-4" />
               </motion.a>
-              <motion.a
-                href={cvHref}
-                target={cvUrl ? "_blank" : undefined}
-                rel={cvUrl ? "noopener noreferrer" : undefined}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl glass text-foreground font-bold text-sm border border-border hover:border-primary/40 transition-colors"
-              >
-                <Download className="w-4 h-4" /> {d.ctaSecondary.label || "Download CV"}
-              </motion.a>
+              {validCvUrl && (
+                <motion.a
+                  href={validCvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl glass text-foreground font-bold text-sm border border-border hover:border-primary/40 transition-colors"
+                >
+                  <Download className="w-4 h-4" /> {d.ctaSecondary.label || "Download CV"}
+                </motion.a>
+              )}
             </motion.div>
 
             <motion.div variants={item} className="mt-12 flex gap-8">
