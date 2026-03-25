@@ -478,7 +478,7 @@ function ProjectsTab({ initialData, initialVisible, onToast }: {
             </div>
             <p className="text-xs text-muted-foreground line-clamp-2">{p.desc}</p>
             <div className="flex flex-wrap gap-1 mt-2">
-              {p.tech.map(t => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{t}</span>)}
+              {(p.tech ?? []).map(t => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{t}</span>)}
             </div>
           </div>
         ))}
