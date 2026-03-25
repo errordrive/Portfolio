@@ -1,13 +1,33 @@
 import { motion } from "framer-motion";
 import { useInView } from "framer-motion";
 import { useRef } from "react";
-import { Brain, Zap, Shield, Cpu } from "lucide-react";
+import { Zap, Bot, Smartphone, Rocket } from "lucide-react";
 
 const highlights = [
-  { icon: Brain, title: "AI & Machine Learning", desc: "Building intelligent systems that learn, adapt, and solve real-world problems with cutting-edge LLMs and neural architectures.", color: "#f97316" },
-  { icon: Shield, title: "Android Reverse Engineering", desc: "Deep expertise in APK analysis, Frida instrumentation, and bypassing security layers to understand how apps truly work.", color: "#8b5cf6" },
-  { icon: Zap, title: "Vibe Coding", desc: "Shipping fast, clean, and beautiful code. I turn ideas into reality with speed and creativity — form meets function.", color: "#10b981" },
-  { icon: Cpu, title: "Systems Thinking", desc: "I see the full picture — from low-level binary analysis to high-level architecture decisions that scale.", color: "#3b82f6" },
+  {
+    icon: Bot,
+    title: "AI as My Superpower",
+    desc: "I don't fight AI — I ride it. Using tools like ChatGPT, Claude, and Cursor to build faster and smarter than ever before.",
+    color: "#f97316",
+  },
+  {
+    icon: Smartphone,
+    title: "Android RE Explorer",
+    desc: "I enjoy poking around Android apps — understanding how things work under the hood, bypassing basic protections, and learning from what I find.",
+    color: "#8b5cf6",
+  },
+  {
+    icon: Zap,
+    title: "Vibe Coding",
+    desc: "My style: start with the vibe, let AI handle the boilerplate, and ship something that actually works. Fast, fun, and real.",
+    color: "#10b981",
+  },
+  {
+    icon: Rocket,
+    title: "Builder Mindset",
+    desc: "I care about getting things out the door. Done is better than perfect — but I still make it look good.",
+    color: "#3b82f6",
+  },
 ];
 
 export default function About() {
@@ -23,13 +43,13 @@ export default function About() {
 
           {/* Photo side */}
           <motion.div
-            initial={{ opacity: 0, x: -40 }}
+            initial={{ opacity: 0, x: -30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7 }}
+            transition={{ duration: 0.5 }}
             className="relative"
           >
             <div className="relative inline-block">
-              {/* Decorative elements */}
+              {/* Decorative corners */}
               <div className="absolute -top-6 -left-6 w-24 h-24 border-2 border-primary/30 rounded-2xl" />
               <div className="absolute -bottom-6 -right-6 w-24 h-24 border-2 border-violet-500/30 rounded-2xl" />
 
@@ -38,58 +58,54 @@ export default function About() {
                   src="/photo2.png"
                   alt="Nayem — About"
                   className="w-full object-cover"
+                  loading="lazy"
                   style={{ maxHeight: "500px", objectPosition: "top" }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-transparent" />
               </div>
 
-              {/* Floating card */}
-              <motion.div
-                animate={{ y: [0, -6, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute -right-4 top-1/3 glass rounded-2xl p-4 border border-primary/20 shadow-xl"
-              >
-                <div className="text-2xl font-black gradient-text">3+</div>
-                <div className="text-xs text-muted-foreground mt-0.5">Years of<br />Deep Expertise</div>
-              </motion.div>
+              {/* Static badge — no infinite animation */}
+              <div className="absolute -right-4 top-1/3 glass rounded-2xl p-4 border border-primary/20 shadow-xl">
+                <div className="text-2xl font-black gradient-text">2+</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Years of<br />Building Stuff</div>
+              </div>
             </div>
           </motion.div>
 
           {/* Content side */}
           <motion.div
-            initial={{ opacity: 0, x: 40 }}
+            initial={{ opacity: 0, x: 30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.7, delay: 0.15 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
           >
             <span className="text-primary text-sm font-semibold tracking-widest uppercase">About Me</span>
             <h2 className="mt-3 text-4xl lg:text-5xl font-black leading-tight mb-6">
-              The mind behind
+              Just a guy who
               <br />
-              <span className="gradient-text">the machine</span>
+              <span className="gradient-text">vibes with code</span>
             </h2>
 
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              I'm <span className="text-foreground font-semibold">Nayem</span> — an AI engineer, reverse engineering specialist, and passionate developer who blends technical depth with creative execution.
+              I'm <span className="text-foreground font-semibold">Nayem</span> — a self-taught builder who figured out that you don't need to be an expert to ship great things. You just need the right tools and the right mindset.
             </p>
 
             <p className="text-muted-foreground leading-relaxed mb-8">
-              My journey started with curiosity: <em>how does this really work?</em> That question led me deep into Android internals, binary analysis, and AI systems. Today, I build intelligent tools, reverse-engineer complex apps, and ship beautiful software at the speed of thought — what I call{" "}
-              <span className="text-primary font-semibold">Vibe Coding</span>.
+              My thing is <span className="text-primary font-semibold">Vibe Coding</span> — using AI tools like ChatGPT, Claude, and Cursor to move fast and build things that actually work. I'm not training models or writing papers. I'm getting ideas out of my head and into the world.
             </p>
 
             <p className="text-muted-foreground leading-relaxed mb-10">
-              I believe the best code is invisible — it just works, elegantly and powerfully. Whether I'm training a custom LLM, bypassing APK security, or crafting a pixel-perfect UI, I bring the same obsessive attention to detail.
+              On the side, I've been exploring Android reverse engineering — digging into APKs, understanding how apps work, bypassing simple protections for fun and learning. It's more of a hobby that became a skill.
             </p>
 
-            {/* Highlights grid */}
+            {/* Highlights */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {highlights.map((h, i) => (
                 <motion.div
                   key={h.title}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
-                  className="glass rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-colors group"
+                  transition={{ duration: 0.4, delay: 0.25 + i * 0.08 }}
+                  className="glass rounded-xl p-4 border border-border/50 hover:border-primary/30 transition-colors"
                 >
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3" style={{ background: h.color + "20" }}>
                     <h.icon className="w-4 h-4" style={{ color: h.color }} />
