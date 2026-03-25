@@ -187,6 +187,26 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
               </div>
             ))}
           </motion.div>
+
+          {/* Mobile-only compact image — stacked naturally below stats */}
+          <motion.div variants={item} className="block sm:hidden mt-8">
+            <div className="relative mx-auto w-44">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/30 to-violet-500/15 blur-xl" />
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden glass border border-primary/20 shadow-2xl">
+                <img
+                  src="/photo1.png"
+                  alt={`${d.name} — Vibe Coder`}
+                  className="w-full h-full object-cover object-top"
+                  loading="eager"
+                />
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background/80 to-transparent" />
+                <div className="absolute bottom-2 left-2 right-2 glass rounded-lg px-2.5 py-1.5 border border-primary/20">
+                  <div className="text-xs font-bold text-foreground">{d.name}</div>
+                  <div className="text-[10px] text-primary mt-0.5 leading-tight">Vibe Coder · AI User · Android RE</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
 
