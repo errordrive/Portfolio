@@ -1,0 +1,186 @@
+You are a senior frontend engineer and responsive UI/UX expert.
+
+I already have a React (Vite) + Tailwind portfolio website, but the UI is NOT properly optimized for mobile and smaller screens.
+
+Your task is to FIX the entire layout system, improve responsiveness, and upgrade the hero section.
+
+========================
+🚨 CURRENT ISSUES
+========================
+- Text sizes are too large on mobile
+- Images are oversized and badly positioned
+- Layout elements are overlapping
+- Hero section looks unbalanced
+- Poor spacing and scaling
+- Content does not fit properly in viewport
+
+========================
+🎯 GOAL
+========================
+- Make the entire site perfectly responsive
+- Fix all overflow, overlap, and scaling issues
+- Ensure clean, balanced layout on ALL devices
+- Improve hero section design
+
+========================
+📱 GLOBAL RESPONSIVE FIX (CRITICAL)
+========================
+
+1. TYPOGRAPHY SCALING
+- Use responsive text sizes:
+  - h1: text-2xl md:text-4xl lg:text-5xl
+  - h2: text-xl md:text-2xl
+  - p: text-sm md:text-base
+
+- Avoid large fixed text sizes
+- Ensure readability on small screens
+
+------------------------
+2. CONTAINER SYSTEM
+------------------------
+- Wrap all sections with:
+  max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
+
+- Prevent content touching screen edges
+
+------------------------
+3. SPACING FIX
+------------------------
+- Use consistent spacing:
+  py-12 md:py-20
+  gap-4 md:gap-8
+
+- Remove excessive margins/paddings
+
+------------------------
+4. OVERFLOW FIX
+------------------------
+- Ensure:
+  overflow-x-hidden globally
+
+- Fix all elements causing horizontal scroll
+
+------------------------
+5. IMAGE HANDLING (CRITICAL)
+------------------------
+- ALL images must:
+  - max-width: 100%
+  - height: auto
+
+- Use:
+  class="w-full h-auto object-cover"
+
+- Avoid fixed height images
+
+- Use responsive containers:
+  aspect-[4/5] or aspect-video
+
+========================
+🎨 HERO SECTION UPGRADE
+========================
+
+------------------------
+📱 MOBILE
+------------------------
+- Layout:
+  flex flex-col
+
+- Order:
+  1. Text
+  2. CTA buttons
+  3. Image
+
+- Reduce text size:
+  - Title smaller and compact
+  - Limit paragraph width
+
+- Image:
+  - aspect-[4/5]
+  - max-h-[50vh]
+  - object-position: 70% center
+
+- Add spacing:
+  mt-6 between text and image
+
+------------------------
+💻 DESKTOP
+------------------------
+- Layout:
+  grid lg:grid-cols-2 items-center
+
+- Left:
+  text content
+
+- Right:
+  image
+
+- Maintain balance:
+  gap-10
+
+------------------------
+✨ VISUAL IMPROVEMENTS
+------------------------
+- Add soft gradient background
+- Reduce heavy blur/glass effects (causing clutter)
+- Improve CTA buttons:
+  - proper padding
+  - hover effects
+
+- Remove unnecessary floating elements that overlap
+
+========================
+📊 CARD / STATS SECTION FIX
+========================
+- Use grid:
+  grid grid-cols-3 gap-4 md:gap-8
+
+- Reduce font size for numbers on mobile:
+  text-xl md:text-3xl
+
+- Prevent wrapping issues
+
+========================
+🖼️ PROFILE IMAGE FIX
+========================
+- Center properly
+- Use:
+  mx-auto
+
+- Remove overlapping badges if breaking layout
+- Ensure no clipping
+
+========================
+⚡ PERFORMANCE + CLEANUP
+========================
+- Remove unnecessary absolute positioning
+- Avoid excessive z-index stacking
+- Simplify layout structure
+
+========================
+📦 OUTPUT
+========================
+- Updated React components
+- Clean Tailwind classes
+- Fully responsive layout
+- No explanation, only code
+
+========================
+🧪 VALIDATION CHECKLIST
+========================
+Ensure:
+✅ No overlapping elements  
+✅ No horizontal scroll  
+✅ Text readable on mobile  
+✅ Images properly scaled  
+✅ Hero section balanced  
+✅ Clean spacing everywhere  
+
+========================
+⚠️ IMPORTANT
+========================
+- Do NOT redesign completely
+- Fix and improve existing layout
+- Keep it modern and clean
+- Mobile experience is TOP priority
+
+Now fix the entire UI and upgrade the hero section.
