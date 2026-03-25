@@ -86,8 +86,7 @@ export default function Hero() {
                 View Work <ArrowRight className="w-4 h-4" />
               </motion.a>
               <motion.a
-                href="/cv.pdf"
-                download
+                href="mailto:nayem@nayem.me?subject=CV%20Request&body=Hi%20Nayem%2C%20I%27d%20like%20to%20request%20your%20CV."
                 whileHover={{ scale: 1.04, y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl glass text-foreground font-bold text-sm border border-border hover:border-primary/40 transition-all"
