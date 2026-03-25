@@ -108,7 +108,7 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
           variants={container}
           initial="hidden"
           animate="show"
-          className="max-w-xl lg:max-w-2xl"
+          className="sm:max-w-[320px] md:max-w-[460px] lg:max-w-xl xl:max-w-2xl"
         >
           <motion.div variants={item} className="mb-4">
             <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-sm font-medium text-primary border border-primary/20">
