@@ -57,7 +57,7 @@ export default function Projects({ data: dataProp, visible: visibleProp }: Proje
           <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
             Things I've <span className="gradient-text">built</span>
           </h2>
-          <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
             Real projects I've shipped — mostly with heavy AI assistance. No pretending I wrote every line solo.
           </p>
         </motion.div>

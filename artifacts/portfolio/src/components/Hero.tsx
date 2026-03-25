@@ -146,7 +146,7 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
               )}
             </motion.div>
 
-            <motion.div variants={item} className="mt-8 lg:mt-12 grid grid-cols-3 gap-3 sm:gap-6">
+            <motion.div variants={item} className="mt-8 lg:mt-12 grid grid-cols-3 gap-3 sm:gap-8">
               {(d.stats?.length ? d.stats : DEFAULT_HERO.stats).map((stat) => (
                 <div key={stat.label}>
                   <div className="text-xl sm:text-2xl font-black gradient-text">{stat.value}</div>
@@ -165,11 +165,11 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
             <div className="relative">
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/30 to-violet-500/15 blur-xl" />
 
-              <div className="relative w-64 sm:w-80 lg:w-96 rounded-3xl overflow-hidden glass border border-primary/20 shadow-2xl">
+              <div className="relative w-64 sm:w-80 lg:w-96 aspect-[3/4] sm:aspect-auto rounded-3xl overflow-hidden glass border border-primary/20 shadow-2xl">
                 <img
                   src="/photo1.png"
                   alt={`${d.name} — Vibe Coder`}
-                  className="w-full h-auto object-cover object-top"
+                  className="w-full h-full sm:h-auto object-cover object-top"
                   loading="eager"
                   style={{ maxHeight: "480px" }}
                 />
