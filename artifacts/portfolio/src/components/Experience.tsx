@@ -21,7 +21,7 @@ interface ExperienceProps {
 
 export default function Experience({ data: dataProp, visible: visibleProp }: ExperienceProps = {}) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const inView = useInView(ref, { once: true, amount: 0.05 });
   const { data: content, isLoading } = useContent();
 
   if (isLoading && !content && !dataProp) return <SkeletonSection height="500px" />;

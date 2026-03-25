@@ -75,7 +75,7 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
             variants={container}
             initial="hidden"
             animate="show"
-            className="order-2 lg:order-1"
+            className="order-1"
           >
             <motion.div variants={item} className="mb-4">
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-sm font-medium text-primary border border-primary/20">
@@ -146,7 +146,7 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
               )}
             </motion.div>
 
-            <motion.div variants={item} className="mt-12 flex gap-8">
+            <motion.div variants={item} className="mt-8 lg:mt-12 flex gap-8">
               {(d.stats?.length ? d.stats : DEFAULT_HERO.stats).map((stat) => (
                 <div key={stat.label}>
                   <div className="text-2xl font-black gradient-text">{stat.value}</div>
@@ -160,18 +160,18 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            className="order-1 lg:order-2 flex justify-center lg:justify-end"
+            className="order-2 flex justify-center lg:justify-end"
           >
             <div className="relative">
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/30 to-violet-500/15 blur-xl" />
 
-              <div className="relative w-72 sm:w-80 lg:w-96 rounded-3xl overflow-hidden glass border border-primary/20 shadow-2xl">
+              <div className="relative w-64 sm:w-80 lg:w-96 rounded-3xl overflow-hidden glass border border-primary/20 shadow-2xl max-h-56 sm:max-h-80 lg:max-h-none">
                 <img
                   src="/photo1.png"
                   alt={`${d.name} — Vibe Coder`}
                   className="w-full object-cover object-top"
                   loading="eager"
-                  style={{ maxHeight: "480px", minHeight: "380px" }}
+                  style={{ maxHeight: "480px" }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background/80 to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4 glass rounded-xl px-4 py-3 border border-primary/20">

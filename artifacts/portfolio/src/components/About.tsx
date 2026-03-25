@@ -32,7 +32,7 @@ interface AboutProps {
 
 export default function About({ data: dataProp, visible: visibleProp }: AboutProps = {}) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, { once: true, amount: 0.05 });
   const { data: content, isLoading } = useContent();
 
   if (isLoading && !content && !dataProp) return <SkeletonSection height="500px" />;

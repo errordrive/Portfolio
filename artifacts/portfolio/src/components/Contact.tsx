@@ -36,7 +36,7 @@ interface ContactProps {
 
 export default function Contact({ data: dataProp, visible: visibleProp }: ContactProps = {}) {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, { once: true, amount: 0.05 });
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
