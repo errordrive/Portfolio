@@ -1,14 +1,14 @@
-import { motion } from "framer-motion";
+import { type Variants, motion } from "framer-motion";
 import { Download, ArrowRight, ChevronDown } from "lucide-react";
 
-const container = {
+const container: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08 } },
 };
 
-const item = {
+const item: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
 };
 
 const roles = ["Vibe Coder", "AI-Powered Builder", "Android RE Explorer"];

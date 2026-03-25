@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import {
+  api,
+  type HeroData, type AboutData, type SkillsData, type ExperienceData, type ProjectsData,
+  type Skill, type TimelineEntry, type Project, type Highlight, type StatItem,
+} from "@/lib/api";
 import { Save, Plus, Trash2, ChevronUp, ChevronDown, CheckCircle, Eye, EyeOff, Pencil, X } from "lucide-react";
 
 const TABS = ["Hero", "About", "Skills", "Experience", "Projects"] as const;
 type Tab = typeof TABS[number];
+
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 
 function Toast({ toast }: { toast: { type: "success" | "error"; msg: string } | null }) {
   if (!toast) return null;
@@ -16,22 +22,24 @@ function Toast({ toast }: { toast: { type: "success" | "error"; msg: string } | 
   );
 }
 
-function FieldInput({ label, value, onChange, textarea, rows = 3, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; textarea?: boolean; rows?: number; placeholder?: string;
+function Field({ label, value, onChange, textarea, rows = 3, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void;
+  textarea?: boolean; rows?: number; placeholder?: string;
 }) {
+  const cls = "w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all";
   return (
     <div>
       <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">{label}</label>
       {textarea ? (
-        <textarea rows={rows} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all resize-none" />
+        <textarea rows={rows} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={`${cls} resize-none`} />
       ) : (
-        <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all" />
+        <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={cls} />
       )}
     </div>
   );
 }
+
+const INPUT_CLS = "px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all";
 
 function VisibilityToggle({ visible, onChange }: { visible: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -52,10 +60,15 @@ function SaveBtn({ onSave, isPending, label }: { onSave: () => void; isPending: 
   );
 }
 
-// ----- Hero Tab -----
-function HeroTab({ initialData, initialVisible, onToast }: { initialData: any; initialVisible: boolean; onToast: (t: "success" | "error", m: string) => void }) {
+type TabToast = (type: "success" | "error", msg: string) => void;
+
+// ─── Hero Tab ────────────────────────────────────────────────────────────────
+
+function HeroTab({ initialData, initialVisible, onToast }: {
+  initialData: HeroData; initialVisible: boolean; onToast: TabToast;
+}) {
   const queryClient = useQueryClient();
-  const [data, setData] = useState<any>(initialData);
+  const [data, setData] = useState<HeroData>(initialData);
   const [visible, setVisible] = useState(initialVisible);
 
   const mutation = useMutation({
@@ -64,7 +77,12 @@ function HeroTab({ initialData, initialVisible, onToast }: { initialData: any; i
     onError: (e: unknown) => onToast("error", e instanceof Error ? e.message : "Failed to save"),
   });
 
-  const update = (key: string, val: unknown) => setData((d: any) => ({ ...d, [key]: val }));
+  const updateStat = (i: number, field: keyof StatItem, val: string) =>
+    setData(d => {
+      const stats = [...d.stats];
+      stats[i] = { ...stats[i], [field]: val };
+      return { ...d, stats };
+    });
 
   return (
     <div className="space-y-5">
@@ -73,34 +91,43 @@ function HeroTab({ initialData, initialVisible, onToast }: { initialData: any; i
         <SaveBtn onSave={() => mutation.mutate()} isPending={mutation.isPending} label="Save Hero" />
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
-        <FieldInput label="Name" value={data.name ?? ""} onChange={v => update("name", v)} />
-        <FieldInput label="Status Badge" value={data.statusBadge ?? ""} onChange={v => update("statusBadge", v)} />
-        <FieldInput label="Tagline" value={data.tagline ?? ""} onChange={v => update("tagline", v)} />
+        <Field label="Name" value={data.name} onChange={v => setData(d => ({ ...d, name: v }))} />
+        <Field label="Status Badge" value={data.statusBadge} onChange={v => setData(d => ({ ...d, statusBadge: v }))} />
+        <Field label="Tagline" value={data.tagline} onChange={v => setData(d => ({ ...d, tagline: v }))} />
       </div>
-      <FieldInput label="Body Text" value={data.body ?? ""} onChange={v => update("body", v)} textarea rows={3} />
-      <FieldInput label="Roles (one per line)" value={(data.roles ?? []).join("\n")} onChange={v => update("roles", v.split("\n").filter(Boolean))} textarea rows={3} />
+      <Field label="Body Text" value={data.body} onChange={v => setData(d => ({ ...d, body: v }))} textarea rows={3} />
+      <Field label="Roles (one per line)" value={data.roles.join("\n")} onChange={v => setData(d => ({ ...d, roles: v.split("\n").filter(Boolean) }))} textarea rows={3} />
+
       <div className="grid sm:grid-cols-2 gap-4">
         {(["ctaPrimary", "ctaSecondary"] as const).map(k => (
           <div key={k}>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">{k === "ctaPrimary" ? "CTA Primary" : "CTA Secondary"}</label>
             <div className="flex gap-2">
-              <input type="text" value={data[k]?.label ?? ""} onChange={e => update(k, { ...data[k], label: e.target.value })} placeholder="Label" className="flex-1 px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all" />
-              <input type="text" value={data[k]?.href ?? ""} onChange={e => update(k, { ...data[k], href: e.target.value })} placeholder="Link" className="flex-1 px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all" />
+              <input type="text" value={data[k]?.label ?? ""} placeholder="Label"
+                onChange={e => setData(d => ({ ...d, [k]: { ...d[k], label: e.target.value } }))}
+                className={`flex-1 ${INPUT_CLS}`} />
+              <input type="text" value={data[k]?.href ?? ""} placeholder="Link"
+                onChange={e => setData(d => ({ ...d, [k]: { ...d[k], href: e.target.value } }))}
+                className={`flex-1 ${INPUT_CLS}`} />
             </div>
           </div>
         ))}
       </div>
+
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Stats</label>
-          <button onClick={() => update("stats", [...(data.stats ?? []), { label: "", value: "" }])} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"><Plus className="w-3 h-3" />Add</button>
+          <button onClick={() => setData(d => ({ ...d, stats: [...d.stats, { label: "", value: "" }] }))}
+            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+            <Plus className="w-3 h-3" />Add
+          </button>
         </div>
         <div className="space-y-2">
-          {(data.stats ?? []).map((stat: any, i: number) => (
+          {data.stats.map((stat, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <input type="text" value={stat.value} onChange={e => { const s = [...data.stats]; s[i] = { ...s[i], value: e.target.value }; update("stats", s); }} placeholder="20+" className="w-20 px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all" />
-              <input type="text" value={stat.label} onChange={e => { const s = [...data.stats]; s[i] = { ...s[i], label: e.target.value }; update("stats", s); }} placeholder="Label" className="flex-1 px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all" />
-              <button onClick={() => update("stats", data.stats.filter((_: any, j: number) => j !== i))} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+              <input type="text" value={stat.value} placeholder="20+" onChange={e => updateStat(i, "value", e.target.value)} className={`w-20 ${INPUT_CLS}`} />
+              <input type="text" value={stat.label} placeholder="Label" onChange={e => updateStat(i, "label", e.target.value)} className={`flex-1 ${INPUT_CLS}`} />
+              <button onClick={() => setData(d => ({ ...d, stats: d.stats.filter((_, j) => j !== i) }))} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
           ))}
         </div>
@@ -109,10 +136,13 @@ function HeroTab({ initialData, initialVisible, onToast }: { initialData: any; i
   );
 }
 
-// ----- About Tab -----
-function AboutTab({ initialData, initialVisible, onToast }: { initialData: any; initialVisible: boolean; onToast: (t: "success" | "error", m: string) => void }) {
+// ─── About Tab ───────────────────────────────────────────────────────────────
+
+function AboutTab({ initialData, initialVisible, onToast }: {
+  initialData: AboutData; initialVisible: boolean; onToast: TabToast;
+}) {
   const queryClient = useQueryClient();
-  const [data, setData] = useState<any>(initialData);
+  const [data, setData] = useState<AboutData>(initialData);
   const [visible, setVisible] = useState(initialVisible);
 
   const mutation = useMutation({
@@ -121,7 +151,12 @@ function AboutTab({ initialData, initialVisible, onToast }: { initialData: any; 
     onError: (e: unknown) => onToast("error", e instanceof Error ? e.message : "Failed to save"),
   });
 
-  const update = (key: string, val: unknown) => setData((d: any) => ({ ...d, [key]: val }));
+  const updateHighlight = (i: number, field: keyof Highlight, val: string) =>
+    setData(d => {
+      const highlights = [...d.highlights];
+      highlights[i] = { ...highlights[i], [field]: val };
+      return { ...d, highlights };
+    });
 
   return (
     <div className="space-y-5">
@@ -130,24 +165,25 @@ function AboutTab({ initialData, initialVisible, onToast }: { initialData: any; 
         <SaveBtn onSave={() => mutation.mutate()} isPending={mutation.isPending} label="Save About" />
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
-        <FieldInput label="Heading" value={data.heading ?? ""} onChange={v => update("heading", v)} />
-        <FieldInput label="Years Label" value={data.yearsLabel ?? ""} onChange={v => update("yearsLabel", v)} />
+        <Field label="Heading" value={data.heading} onChange={v => setData(d => ({ ...d, heading: v }))} />
+        <Field label="Years Label" value={data.yearsLabel} onChange={v => setData(d => ({ ...d, yearsLabel: v }))} />
       </div>
-      <FieldInput label="Bio paragraphs (one line = one paragraph)" value={(data.bio ?? []).join("\n")} onChange={v => update("bio", v.split("\n").filter(Boolean))} textarea rows={6} />
+      <Field label="Bio paragraphs (one line = one paragraph)" value={data.bio.join("\n")} onChange={v => setData(d => ({ ...d, bio: v.split("\n").filter(Boolean) }))} textarea rows={6} />
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Highlight Cards</label>
-          <button onClick={() => update("highlights", [...(data.highlights ?? []), { title: "", desc: "", color: "#f97316" }])} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"><Plus className="w-3 h-3" />Add</button>
+          <button onClick={() => setData(d => ({ ...d, highlights: [...d.highlights, { title: "", desc: "", color: "#f97316" }] }))}
+            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"><Plus className="w-3 h-3" />Add</button>
         </div>
         <div className="grid sm:grid-cols-2 gap-3">
-          {(data.highlights ?? []).map((h: any, i: number) => (
+          {data.highlights.map((h, i) => (
             <div key={i} className="p-4 rounded-xl bg-muted border border-border space-y-2">
               <div className="flex items-center gap-2">
-                <input type="text" value={h.title} onChange={e => { const arr = [...data.highlights]; arr[i] = { ...arr[i], title: e.target.value }; update("highlights", arr); }} placeholder="Title" className="flex-1 px-3 py-1.5 rounded-lg bg-background border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all" />
-                <input type="color" value={h.color} onChange={e => { const arr = [...data.highlights]; arr[i] = { ...arr[i], color: e.target.value }; update("highlights", arr); }} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
-                <button onClick={() => update("highlights", data.highlights.filter((_: any, j: number) => j !== i))} className="p-1 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3 h-3" /></button>
+                <input type="text" value={h.title} placeholder="Title" onChange={e => updateHighlight(i, "title", e.target.value)} className={`flex-1 ${INPUT_CLS}`} />
+                <input type="color" value={h.color} onChange={e => updateHighlight(i, "color", e.target.value)} className="w-8 h-8 rounded cursor-pointer border-0 bg-transparent" />
+                <button onClick={() => setData(d => ({ ...d, highlights: d.highlights.filter((_, j) => j !== i) }))} className="p-1 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3 h-3" /></button>
               </div>
-              <textarea rows={2} value={h.desc} onChange={e => { const arr = [...data.highlights]; arr[i] = { ...arr[i], desc: e.target.value }; update("highlights", arr); }} placeholder="Description" className="w-full px-3 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:border-primary/50 transition-all resize-none" />
+              <textarea rows={2} value={h.desc} placeholder="Description" onChange={e => updateHighlight(i, "desc", e.target.value)} className="w-full px-3 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:border-primary/50 transition-all resize-none" />
             </div>
           ))}
         </div>
@@ -156,13 +192,18 @@ function AboutTab({ initialData, initialVisible, onToast }: { initialData: any; 
   );
 }
 
-// ----- Skills Tab -----
-function SkillsTab({ initialData, initialVisible, onToast }: { initialData: any; initialVisible: boolean; onToast: (t: "success" | "error", m: string) => void }) {
+// ─── Skills Tab ──────────────────────────────────────────────────────────────
+
+const DEFAULT_SKILL: Skill = { name: "", icon: "🔧", level: 70, category: "Dev", desc: "" };
+
+function SkillsTab({ initialData, initialVisible, onToast }: {
+  initialData: SkillsData; initialVisible: boolean; onToast: TabToast;
+}) {
   const queryClient = useQueryClient();
-  const [data, setData] = useState<any>(initialData);
+  const [data, setData] = useState<SkillsData>(initialData);
   const [visible, setVisible] = useState(initialVisible);
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<Skill>(DEFAULT_SKILL);
 
   const mutation = useMutation({
     mutationFn: () => api.admin.content.update("skills", data, visible),
@@ -170,23 +211,24 @@ function SkillsTab({ initialData, initialVisible, onToast }: { initialData: any;
     onError: (e: unknown) => onToast("error", e instanceof Error ? e.message : "Failed to save"),
   });
 
-  const skills: any[] = data.skills ?? [];
-  const updateSkills = (arr: any[]) => setData((d: any) => ({ ...d, skills: arr }));
+  const skills = data.skills;
+  const setSkills = (arr: Skill[]) => setData(d => ({ ...d, skills: arr }));
 
   function moveSkill(i: number, dir: -1 | 1) {
     const arr = [...skills]; const j = i + dir;
     if (j < 0 || j >= arr.length) return;
-    [arr[i], arr[j]] = [arr[j], arr[i]]; updateSkills(arr);
+    [arr[i], arr[j]] = [arr[j], arr[i]]; setSkills(arr);
   }
 
   function startEdit(i: number) {
     setEditIdx(i);
-    setEditForm(i === -1 ? { name: "", icon: "🔧", level: 70, category: "Dev", desc: "" } : { ...skills[i] });
+    setEditForm(i === -1 ? DEFAULT_SKILL : { ...skills[i] });
   }
 
   function saveEdit() {
-    if (editIdx === -1) updateSkills([...skills, editForm]);
-    else { const arr = [...skills]; arr[editIdx!] = editForm; updateSkills(arr); }
+    if (editIdx === null) return;
+    if (editIdx === -1) setSkills([...skills, editForm]);
+    else { const arr = [...skills]; arr[editIdx] = editForm; setSkills(arr); }
     setEditIdx(null);
   }
 
@@ -207,12 +249,12 @@ function SkillsTab({ initialData, initialVisible, onToast }: { initialData: any;
             <button onClick={() => setEditIdx(null)} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[["icon", "Icon"], ["name", "Name"], ["category", "Category"]].map(([k, p]) => (
-              <input key={k} value={editForm[k] ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, [k]: e.target.value }))} placeholder={p} className="px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm w-full focus:outline-none focus:border-primary/50" />
-            ))}
-            <input type="number" min={0} max={100} value={editForm.level ?? 70} onChange={e => setEditForm((f: any) => ({ ...f, level: Number(e.target.value) }))} placeholder="Level" className="px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm w-full focus:outline-none focus:border-primary/50" />
+            <input value={editForm.icon} onChange={e => setEditForm(f => ({ ...f, icon: e.target.value }))} placeholder="Icon" className={INPUT_CLS} />
+            <input value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} placeholder="Name" className={INPUT_CLS} />
+            <input value={editForm.category} onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))} placeholder="Category" className={INPUT_CLS} />
+            <input type="number" min={0} max={100} value={editForm.level} onChange={e => setEditForm(f => ({ ...f, level: Number(e.target.value) }))} placeholder="Level" className={INPUT_CLS} />
           </div>
-          <input value={editForm.desc ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, desc: e.target.value }))} placeholder="Description" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50" />
+          <input value={editForm.desc} onChange={e => setEditForm(f => ({ ...f, desc: e.target.value }))} placeholder="Description" className={`w-full ${INPUT_CLS}`} />
           <button onClick={saveEdit} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">Save</button>
         </div>
       )}
@@ -226,7 +268,7 @@ function SkillsTab({ initialData, initialVisible, onToast }: { initialData: any;
             <th className="px-3 py-2.5" />
           </tr></thead>
           <tbody className="divide-y divide-white/5">
-            {skills.map((skill: any, i: number) => (
+            {skills.map((skill, i) => (
               <tr key={i} className="hover:bg-white/3 transition-colors">
                 <td className="px-4 py-3"><span className="mr-2">{skill.icon}</span><span className="font-medium text-foreground">{skill.name}</span></td>
                 <td className="px-3 py-3 text-muted-foreground hidden sm:table-cell">{skill.category}</td>
@@ -241,7 +283,7 @@ function SkillsTab({ initialData, initialVisible, onToast }: { initialData: any;
                     <button onClick={() => moveSkill(i, -1)} disabled={i === 0} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"><ChevronUp className="w-3.5 h-3.5" /></button>
                     <button onClick={() => moveSkill(i, 1)} disabled={i === skills.length - 1} className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"><ChevronDown className="w-3.5 h-3.5" /></button>
                     <button onClick={() => startEdit(i)} className="p-1 text-muted-foreground hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => updateSkills(skills.filter((_: any, j: number) => j !== i))} className="p-1 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setSkills(skills.filter((_, j) => j !== i))} className="p-1 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </td>
               </tr>
@@ -253,13 +295,27 @@ function SkillsTab({ initialData, initialVisible, onToast }: { initialData: any;
   );
 }
 
-// ----- Experience Tab -----
-function ExperienceTab({ initialData, initialVisible, onToast }: { initialData: any; initialVisible: boolean; onToast: (t: "success" | "error", m: string) => void }) {
+// ─── Experience Tab ──────────────────────────────────────────────────────────
+
+interface TimelineEditForm {
+  year: string;
+  title: string;
+  org: string;
+  desc: string;
+  tags: string;
+  color: string;
+}
+
+const DEFAULT_ENTRY: TimelineEditForm = { year: "", title: "", org: "", desc: "", tags: "", color: "#f97316" };
+
+function ExperienceTab({ initialData, initialVisible, onToast }: {
+  initialData: ExperienceData; initialVisible: boolean; onToast: TabToast;
+}) {
   const queryClient = useQueryClient();
-  const [data, setData] = useState<any>(initialData);
+  const [data, setData] = useState<ExperienceData>(initialData);
   const [visible, setVisible] = useState(initialVisible);
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<TimelineEditForm>(DEFAULT_ENTRY);
 
   const mutation = useMutation({
     mutationFn: () => api.admin.content.update("experience", data, visible),
@@ -267,18 +323,20 @@ function ExperienceTab({ initialData, initialVisible, onToast }: { initialData: 
     onError: (e: unknown) => onToast("error", e instanceof Error ? e.message : "Failed to save"),
   });
 
-  const timeline: any[] = data.timeline ?? [];
-  const update = (arr: any[]) => setData((d: any) => ({ ...d, timeline: arr }));
+  const timeline = data.timeline;
+  const setTimeline = (arr: TimelineEntry[]) => setData(d => ({ ...d, timeline: arr }));
 
   function startEdit(i: number) {
     setEditIdx(i);
-    setEditForm(i === -1 ? { year: "", title: "", org: "", desc: "", tags: "", color: "#f97316" } : { ...timeline[i], tags: (timeline[i].tags ?? []).join(", ") });
+    if (i === -1) setEditForm(DEFAULT_ENTRY);
+    else setEditForm({ ...timeline[i], tags: timeline[i].tags.join(", ") });
   }
 
   function saveEdit() {
-    const item = { ...editForm, tags: String(editForm.tags).split(",").map((t: string) => t.trim()).filter(Boolean) };
-    if (editIdx === -1) update([...timeline, item]);
-    else { const arr = [...timeline]; arr[editIdx!] = item; update(arr); }
+    if (editIdx === null) return;
+    const item: TimelineEntry = { ...editForm, tags: editForm.tags.split(",").map(t => t.trim()).filter(Boolean) };
+    if (editIdx === -1) setTimeline([...timeline, item]);
+    else { const arr = [...timeline]; arr[editIdx] = item; setTimeline(arr); }
     setEditIdx(null);
   }
 
@@ -299,27 +357,27 @@ function ExperienceTab({ initialData, initialVisible, onToast }: { initialData: 
             <button onClick={() => setEditIdx(null)} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {["year", "title", "org"].map(k => (
-              <input key={k} value={editForm[k] ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, [k]: e.target.value }))} placeholder={k.charAt(0).toUpperCase() + k.slice(1)} className="px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50" />
-            ))}
+            <input value={editForm.year} onChange={e => setEditForm(f => ({ ...f, year: e.target.value }))} placeholder="Year" className={INPUT_CLS} />
+            <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} placeholder="Title" className={INPUT_CLS} />
+            <input value={editForm.org} onChange={e => setEditForm(f => ({ ...f, org: e.target.value }))} placeholder="Org" className={INPUT_CLS} />
           </div>
-          <textarea rows={2} value={editForm.desc ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, desc: e.target.value }))} placeholder="Description" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 resize-none" />
+          <textarea rows={2} value={editForm.desc} onChange={e => setEditForm(f => ({ ...f, desc: e.target.value }))} placeholder="Description" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 resize-none" />
           <div className="flex gap-3 items-center">
-            <input value={typeof editForm.tags === "string" ? editForm.tags : (editForm.tags ?? []).join(", ")} onChange={e => setEditForm((f: any) => ({ ...f, tags: e.target.value }))} placeholder="Tags (comma-sep)" className="flex-1 px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50" />
-            <input type="color" value={editForm.color ?? "#f97316"} onChange={e => setEditForm((f: any) => ({ ...f, color: e.target.value }))} className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent" />
+            <input value={editForm.tags} onChange={e => setEditForm(f => ({ ...f, tags: e.target.value }))} placeholder="Tags (comma-sep)" className={`flex-1 ${INPUT_CLS}`} />
+            <input type="color" value={editForm.color} onChange={e => setEditForm(f => ({ ...f, color: e.target.value }))} className="w-10 h-10 rounded cursor-pointer border-0 bg-transparent" />
           </div>
           <button onClick={saveEdit} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">Save</button>
         </div>
       )}
 
       <div className="space-y-3">
-        {timeline.map((item: any, i: number) => (
+        {timeline.map((item, i) => (
           <div key={i} className="glass rounded-xl border border-white/10 p-4 flex items-start gap-4">
             <div style={{ background: item.color + "25", color: item.color }} className="px-2.5 py-1 rounded-lg text-xs font-bold shrink-0">{item.year}</div>
             <div className="flex-1 min-w-0"><div className="font-semibold text-foreground text-sm">{item.title}</div><div className="text-xs text-muted-foreground">{item.org}</div></div>
             <div className="flex gap-1 shrink-0">
               <button onClick={() => startEdit(i)} className="p-1.5 text-muted-foreground hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
-              <button onClick={() => update(timeline.filter((_: any, j: number) => j !== i))} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setTimeline(timeline.filter((_, j) => j !== i))} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
           </div>
         ))}
@@ -328,13 +386,27 @@ function ExperienceTab({ initialData, initialVisible, onToast }: { initialData: 
   );
 }
 
-// ----- Projects Tab -----
-function ProjectsTab({ initialData, initialVisible, onToast }: { initialData: any; initialVisible: boolean; onToast: (t: "success" | "error", m: string) => void }) {
+// ─── Projects Tab ────────────────────────────────────────────────────────────
+
+interface ProjectEditForm {
+  title: string;
+  desc: string;
+  tech: string;
+  github: string;
+  demo: string;
+  featured: boolean;
+}
+
+const DEFAULT_PROJECT: ProjectEditForm = { title: "", desc: "", tech: "", github: "", demo: "", featured: false };
+
+function ProjectsTab({ initialData, initialVisible, onToast }: {
+  initialData: ProjectsData; initialVisible: boolean; onToast: TabToast;
+}) {
   const queryClient = useQueryClient();
-  const [data, setData] = useState<any>(initialData);
+  const [data, setData] = useState<ProjectsData>(initialData);
   const [visible, setVisible] = useState(initialVisible);
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<ProjectEditForm>(DEFAULT_PROJECT);
 
   const mutation = useMutation({
     mutationFn: () => api.admin.content.update("projects", data, visible),
@@ -342,18 +414,20 @@ function ProjectsTab({ initialData, initialVisible, onToast }: { initialData: an
     onError: (e: unknown) => onToast("error", e instanceof Error ? e.message : "Failed to save"),
   });
 
-  const projects: any[] = data.projects ?? [];
-  const update = (arr: any[]) => setData((d: any) => ({ ...d, projects: arr }));
+  const projects = data.projects;
+  const setProjects = (arr: Project[]) => setData(d => ({ ...d, projects: arr }));
 
   function startEdit(i: number) {
     setEditIdx(i);
-    setEditForm(i === -1 ? { title: "", desc: "", tech: "", github: "", demo: "", featured: false } : { ...projects[i], tech: (projects[i].tech ?? []).join(", ") });
+    if (i === -1) setEditForm(DEFAULT_PROJECT);
+    else setEditForm({ ...projects[i], tech: projects[i].tech.join(", ") });
   }
 
   function saveEdit() {
-    const item = { ...editForm, tech: String(editForm.tech).split(",").map((t: string) => t.trim()).filter(Boolean) };
-    if (editIdx === -1) update([...projects, item]);
-    else { const arr = [...projects]; arr[editIdx!] = item; update(arr); }
+    if (editIdx === null) return;
+    const item: Project = { ...editForm, tech: editForm.tech.split(",").map(t => t.trim()).filter(Boolean) };
+    if (editIdx === -1) setProjects([...projects, item]);
+    else { const arr = [...projects]; arr[editIdx] = item; setProjects(arr); }
     setEditIdx(null);
   }
 
@@ -374,14 +448,14 @@ function ProjectsTab({ initialData, initialVisible, onToast }: { initialData: an
             <button onClick={() => setEditIdx(null)} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
-            <input value={editForm.title ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, title: e.target.value }))} placeholder="Title" className="px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50" />
-            <input value={typeof editForm.tech === "string" ? editForm.tech : (editForm.tech ?? []).join(", ")} onChange={e => setEditForm((f: any) => ({ ...f, tech: e.target.value }))} placeholder="Tech (comma-sep)" className="px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50" />
-            <input value={editForm.github ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, github: e.target.value }))} placeholder="GitHub URL" className="px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50" />
-            <input value={editForm.demo ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, demo: e.target.value }))} placeholder="Demo URL" className="px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50" />
+            <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))} placeholder="Title" className={INPUT_CLS} />
+            <input value={editForm.tech} onChange={e => setEditForm(f => ({ ...f, tech: e.target.value }))} placeholder="Tech (comma-sep)" className={INPUT_CLS} />
+            <input value={editForm.github} onChange={e => setEditForm(f => ({ ...f, github: e.target.value }))} placeholder="GitHub URL" className={INPUT_CLS} />
+            <input value={editForm.demo} onChange={e => setEditForm(f => ({ ...f, demo: e.target.value }))} placeholder="Demo URL" className={INPUT_CLS} />
           </div>
-          <textarea rows={3} value={editForm.desc ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, desc: e.target.value }))} placeholder="Description" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 resize-none" />
+          <textarea rows={3} value={editForm.desc} onChange={e => setEditForm(f => ({ ...f, desc: e.target.value }))} placeholder="Description" className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 resize-none" />
           <label className="flex items-center gap-2 cursor-pointer text-sm text-foreground">
-            <input type="checkbox" checked={editForm.featured ?? false} onChange={e => setEditForm((f: any) => ({ ...f, featured: e.target.checked }))} className="accent-primary" />
+            <input type="checkbox" checked={editForm.featured} onChange={e => setEditForm(f => ({ ...f, featured: e.target.checked }))} className="accent-primary" />
             Featured project
           </label>
           <button onClick={saveEdit} className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors">Save</button>
@@ -389,7 +463,7 @@ function ProjectsTab({ initialData, initialVisible, onToast }: { initialData: an
       )}
 
       <div className="grid sm:grid-cols-2 gap-3">
-        {projects.map((p: any, i: number) => (
+        {projects.map((p, i) => (
           <div key={i} className="glass rounded-xl border border-white/10 p-4">
             <div className="flex items-start justify-between gap-2 mb-2">
               <div>
@@ -398,12 +472,12 @@ function ProjectsTab({ initialData, initialVisible, onToast }: { initialData: an
               </div>
               <div className="flex gap-1 shrink-0">
                 <button onClick={() => startEdit(i)} className="p-1.5 text-muted-foreground hover:text-primary transition-colors"><Pencil className="w-3.5 h-3.5" /></button>
-                <button onClick={() => update(projects.filter((_: any, j: number) => j !== i))} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setProjects(projects.filter((_, j) => j !== i))} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
               </div>
             </div>
             <p className="text-xs text-muted-foreground line-clamp-2">{p.desc}</p>
             <div className="flex flex-wrap gap-1 mt-2">
-              {(p.tech ?? []).map((t: string) => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{t}</span>)}
+              {p.tech.map(t => <span key={t} className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{t}</span>)}
             </div>
           </div>
         ))}
@@ -412,7 +486,14 @@ function ProjectsTab({ initialData, initialVisible, onToast }: { initialData: an
   );
 }
 
-// ----- Main ContentManager -----
+// ─── Main ContentManager ─────────────────────────────────────────────────────
+
+const DEFAULT_HERO: HeroData = { name: "", statusBadge: "", tagline: "", body: "", roles: [], ctaPrimary: { label: "", href: "" }, ctaSecondary: { label: "", href: "" }, stats: [] };
+const DEFAULT_ABOUT: AboutData = { heading: "", yearsLabel: "", bio: [], highlights: [] };
+const DEFAULT_SKILLS: SkillsData = { skills: [] };
+const DEFAULT_EXPERIENCE: ExperienceData = { timeline: [] };
+const DEFAULT_PROJECTS: ProjectsData = { projects: [] };
+
 export default function ContentManager() {
   const [activeTab, setActiveTab] = useState<Tab>("Hero");
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
@@ -430,21 +511,19 @@ export default function ContentManager() {
   if (isLoading || !content) {
     return (
       <div className="max-w-4xl">
-        <div className="flex gap-1 mb-6 bg-muted rounded-xl p-1 flex-wrap">
-          {TABS.map(tab => <div key={tab} className="px-4 py-2 rounded-lg bg-muted h-9 w-20 animate-pulse" />)}
+        <div className="flex gap-1 mb-6 bg-muted rounded-xl p-1">
+          {TABS.map(tab => <div key={tab} className="px-4 py-2 rounded-lg bg-background/50 h-9 w-24 animate-pulse" />)}
         </div>
         <div className="glass rounded-2xl border border-white/10 p-6 h-64 animate-pulse" />
       </div>
     );
   }
 
-  const tabProps: Record<Tab, { initialData: any; initialVisible: boolean }> = {
-    Hero: { initialData: content.hero?.data ?? {}, initialVisible: content.hero?.visible ?? true },
-    About: { initialData: content.about?.data ?? {}, initialVisible: content.about?.visible ?? true },
-    Skills: { initialData: content.skills?.data ?? {}, initialVisible: content.skills?.visible ?? true },
-    Experience: { initialData: content.experience?.data ?? {}, initialVisible: content.experience?.visible ?? true },
-    Projects: { initialData: content.projects?.data ?? {}, initialVisible: content.projects?.visible ?? true },
-  };
+  const hero = content.hero ?? { data: DEFAULT_HERO, visible: true };
+  const about = content.about ?? { data: DEFAULT_ABOUT, visible: true };
+  const skills = content.skills ?? { data: DEFAULT_SKILLS, visible: true };
+  const experience = content.experience ?? { data: DEFAULT_EXPERIENCE, visible: true };
+  const projects = content.projects ?? { data: DEFAULT_PROJECTS, visible: true };
 
   return (
     <div className="max-w-4xl">
@@ -458,11 +537,11 @@ export default function ContentManager() {
         ))}
       </div>
       <div className="glass rounded-2xl border border-white/10 p-6">
-        {activeTab === "Hero" && <HeroTab key="hero" {...tabProps.Hero} onToast={handleToast} />}
-        {activeTab === "About" && <AboutTab key="about" {...tabProps.About} onToast={handleToast} />}
-        {activeTab === "Skills" && <SkillsTab key="skills" {...tabProps.Skills} onToast={handleToast} />}
-        {activeTab === "Experience" && <ExperienceTab key="experience" {...tabProps.Experience} onToast={handleToast} />}
-        {activeTab === "Projects" && <ProjectsTab key="projects" {...tabProps.Projects} onToast={handleToast} />}
+        {activeTab === "Hero" && <HeroTab key="hero" initialData={hero.data} initialVisible={hero.visible} onToast={handleToast} />}
+        {activeTab === "About" && <AboutTab key="about" initialData={about.data} initialVisible={about.visible} onToast={handleToast} />}
+        {activeTab === "Skills" && <SkillsTab key="skills" initialData={skills.data} initialVisible={skills.visible} onToast={handleToast} />}
+        {activeTab === "Experience" && <ExperienceTab key="experience" initialData={experience.data} initialVisible={experience.visible} onToast={handleToast} />}
+        {activeTab === "Projects" && <ProjectsTab key="projects" initialData={projects.data} initialVisible={projects.visible} onToast={handleToast} />}
       </div>
     </div>
   );

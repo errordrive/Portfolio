@@ -20,7 +20,7 @@ export default function Dashboard() {
   });
 
   const loading = postsLoading || msgsLoading || contentLoading;
-  const projects = (content?.projects?.data as any)?.projects ?? [];
+  const projects = content?.projects?.data?.projects ?? [];
 
   const statCards = [
     { label: "Total Posts", value: posts.length, icon: FileText, color: "#f97316" },

@@ -56,9 +56,9 @@ export const api = {
 
   // Public
   content: {
-    getAll: () => request<Record<string, { data: unknown; visible: boolean }>>("/content"),
+    getAll: () => request<PublicContent>("/content"),
     getSection: (section: string) =>
-      request<{ data: unknown; visible: boolean }>(`/content/${section}`),
+      request<ContentSection<unknown>>(`/content/${section}`),
   },
 
   settings: {
@@ -74,7 +74,7 @@ export const api = {
   // Admin
   admin: {
     content: {
-      getAll: () => request<Record<string, { data: unknown; visible: boolean; updatedAt: string }>>("/admin/content"),
+      getAll: () => request<AllContent>("/admin/content"),
       update: (section: string, data: unknown, visible?: boolean) =>
         request("/admin/content/" + section, {
           method: "PUT",
@@ -131,6 +131,8 @@ export const api = {
   },
 };
 
+// ─────────────────────────────── Blog ────────────────────────────────────────
+
 export interface BlogPost {
   id: number;
   title: string;
@@ -151,6 +153,8 @@ export interface BlogPost {
   updatedAt: string;
 }
 
+// ─────────────────────────────── Messages ─────────────────────────────────────
+
 export interface Message {
   id: number;
   name: string;
@@ -160,3 +164,97 @@ export interface Message {
   read: boolean;
   createdAt: string;
 }
+
+// ─────────────────────────────── Content data shapes ─────────────────────────
+
+export interface CtaButton {
+  label: string;
+  href: string;
+}
+
+export interface StatItem {
+  label: string;
+  value: string;
+}
+
+export interface HeroData {
+  name: string;
+  statusBadge: string;
+  tagline: string;
+  body: string;
+  roles: string[];
+  ctaPrimary: CtaButton;
+  ctaSecondary: CtaButton;
+  stats: StatItem[];
+}
+
+export interface Highlight {
+  title: string;
+  desc: string;
+  color: string;
+}
+
+export interface AboutData {
+  heading: string;
+  yearsLabel: string;
+  bio: string[];
+  highlights: Highlight[];
+}
+
+export interface Skill {
+  name: string;
+  icon: string;
+  level: number;
+  category: string;
+  desc: string;
+}
+
+export interface SkillsData {
+  skills: Skill[];
+}
+
+export interface TimelineEntry {
+  year: string;
+  title: string;
+  org: string;
+  desc: string;
+  tags: string[];
+  color: string;
+}
+
+export interface ExperienceData {
+  timeline: TimelineEntry[];
+}
+
+export interface Project {
+  title: string;
+  desc: string;
+  tech: string[];
+  github: string;
+  demo: string;
+  featured: boolean;
+}
+
+export interface ProjectsData {
+  projects: Project[];
+}
+
+// ─────────────────────────────── Content section wrappers ────────────────────
+
+export interface ContentSection<T> {
+  data: T;
+  visible: boolean;
+  updatedAt?: string;
+}
+
+/** Shape returned by GET /admin/content */
+export interface AllContent {
+  hero?: ContentSection<HeroData>;
+  about?: ContentSection<AboutData>;
+  skills?: ContentSection<SkillsData>;
+  experience?: ContentSection<ExperienceData>;
+  projects?: ContentSection<ProjectsData>;
+}
+
+/** Shape returned by GET /content (public, partial overlap) */
+export type PublicContent = Partial<AllContent>;
