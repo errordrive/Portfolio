@@ -96,7 +96,7 @@ export default function Contact({ data: dataProp, visible: visibleProp }: Contac
           <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
             Let's <span className="gradient-text">Connect</span>
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-4 text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
             Have a project in mind, want to collaborate, or just want to say hi? My inbox is always open.
           </p>
         </motion.div>

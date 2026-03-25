@@ -64,7 +64,7 @@ export default function Skills({ data: dataProp, visible: visibleProp }: SkillsP
           <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
             What I actually <span className="gradient-text">know</span>
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-4 text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
             Honest skills, honest levels. No fake expertise — just what I genuinely do and how comfortable I am doing it.
           </p>
 

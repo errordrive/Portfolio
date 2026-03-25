@@ -48,7 +48,7 @@ export default function Experience({ data: dataProp, visible: visibleProp }: Exp
           <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
             How I got <span className="gradient-text">here</span>
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-4 text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
             No fancy degrees or corporate titles — just a self-taught builder who figured things out along the way.
           </p>
         </motion.div>
