@@ -61,7 +61,7 @@ export default function Skills({ data: dataProp, visible: visibleProp }: SkillsP
           className="text-center mb-14"
         >
           <span className="text-primary text-sm font-semibold tracking-widest uppercase">Skills</span>
-          <h2 className="mt-3 text-4xl lg:text-5xl font-black">
+          <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
             What I actually <span className="gradient-text">know</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">

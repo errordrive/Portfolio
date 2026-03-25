@@ -45,7 +45,7 @@ export default function Experience({ data: dataProp, visible: visibleProp }: Exp
           className="text-center mb-14"
         >
           <span className="text-primary text-sm font-semibold tracking-widest uppercase">Journey</span>
-          <h2 className="mt-3 text-4xl lg:text-5xl font-black">
+          <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
             How I got <span className="gradient-text">here</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">

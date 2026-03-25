@@ -84,13 +84,13 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
               </span>
             </motion.div>
 
-            <motion.h1 variants={item} className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-4">
+            <motion.h1 variants={item} className="text-4xl sm:text-5xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-4">
               <span className="text-foreground">Hi, I'm </span>
               <span className="gradient-text neon-text-glow">{d.name}</span>
             </motion.h1>
 
             {d.tagline && (
-              <motion.p variants={item} className="text-xl sm:text-2xl font-semibold text-foreground/80 mb-4 max-w-lg">
+              <motion.p variants={item} className="text-base sm:text-xl font-semibold text-foreground/80 mb-4 max-w-lg">
                 {d.tagline}
               </motion.p>
             )}
@@ -112,7 +112,7 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
               </div>
             </motion.div>
 
-            <motion.p variants={item} className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
+            <motion.p variants={item} className="text-sm sm:text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
               {d.body}
             </motion.p>
 
@@ -146,11 +146,11 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
               )}
             </motion.div>
 
-            <motion.div variants={item} className="mt-8 lg:mt-12 flex gap-8">
+            <motion.div variants={item} className="mt-8 lg:mt-12 grid grid-cols-3 gap-3 sm:gap-6">
               {(d.stats?.length ? d.stats : DEFAULT_HERO.stats).map((stat) => (
                 <div key={stat.label}>
-                  <div className="text-2xl font-black gradient-text">{stat.value}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{stat.label}</div>
+                  <div className="text-xl sm:text-2xl font-black gradient-text">{stat.value}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5 leading-tight">{stat.label}</div>
                 </div>
               ))}
             </motion.div>
@@ -165,11 +165,11 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
             <div className="relative">
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/30 to-violet-500/15 blur-xl" />
 
-              <div className="relative w-64 sm:w-80 lg:w-96 rounded-3xl overflow-hidden glass border border-primary/20 shadow-2xl max-h-56 sm:max-h-80 lg:max-h-none">
+              <div className="relative w-64 sm:w-80 lg:w-96 rounded-3xl overflow-hidden glass border border-primary/20 shadow-2xl">
                 <img
                   src="/photo1.png"
                   alt={`${d.name} — Vibe Coder`}
-                  className="w-full object-cover object-top"
+                  className="w-full h-auto object-cover object-top"
                   loading="eager"
                   style={{ maxHeight: "480px" }}
                 />
@@ -180,11 +180,11 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
                 </div>
               </div>
 
-              <div className="absolute -top-4 -right-4 glass rounded-2xl px-3 py-2 border border-violet-500/30 shadow-lg">
+              <div className="hidden sm:block absolute -top-4 -right-4 glass rounded-2xl px-3 py-2 border border-violet-500/30 shadow-lg">
                 <div className="text-xs font-bold text-violet-400">✨ Vibe Coder</div>
               </div>
 
-              <div className="absolute -bottom-4 -left-4 glass rounded-2xl px-3 py-2 border border-primary/30 shadow-lg">
+              <div className="hidden sm:block absolute -bottom-4 -left-4 glass rounded-2xl px-3 py-2 border border-primary/30 shadow-lg">
                 <div className="text-xs font-bold text-primary">🤖 AI-Powered</div>
               </div>
             </div>

@@ -93,7 +93,7 @@ export default function Contact({ data: dataProp, visible: visibleProp }: Contac
           className="text-center mb-16"
         >
           <span className="text-primary text-sm font-semibold tracking-widest uppercase">Contact</span>
-          <h2 className="mt-3 text-4xl lg:text-5xl font-black">
+          <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
             Let's <span className="gradient-text">Connect</span>
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">

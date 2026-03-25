@@ -87,12 +87,12 @@ export default function About({ data: dataProp, visible: visibleProp }: AboutPro
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <span className="text-primary text-sm font-semibold tracking-widest uppercase">About Me</span>
-            <h2 className="mt-3 text-4xl lg:text-5xl font-black leading-tight mb-6">
+            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black leading-tight mb-6">
               <span className="gradient-text">{d.heading || DEFAULT_ABOUT.heading}</span>
             </h2>
 
             {bio.map((paragraph, i) => (
-              <p key={i} className={`text-muted-foreground ${i === 0 ? "text-lg" : ""} leading-relaxed ${i < bio.length - 1 ? "mb-6" : "mb-10"}`}>
+              <p key={i} className={`text-muted-foreground ${i === 0 ? "text-sm sm:text-base md:text-lg" : "text-sm sm:text-base"} leading-relaxed ${i < bio.length - 1 ? "mb-6" : "mb-10"}`}>
                 {paragraph}
               </p>
             ))}
