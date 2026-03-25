@@ -255,8 +255,17 @@ export interface ContentSection<T> {
   updatedAt?: string;
 }
 
+export interface ContactSocialLink {
+  platform: string;
+  label: string;
+  href: string;
+}
+
 export interface ContactData {
-  visible?: boolean;
+  bio?: string;
+  email?: string;
+  location?: string;
+  socials?: ContactSocialLink[];
 }
 
 /** Shape returned by GET /admin/content */
