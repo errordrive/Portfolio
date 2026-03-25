@@ -285,8 +285,6 @@ export async function seedDatabase() {
   if (existingCv.length === 0) {
     await db.insert(cvFile).values({ url: "" });
   } else if (existingCv[0].url && existingCv[0].url.includes("example.com")) {
-    await db
-      .update(cvFile)
-      .set({ url: "" });
+    await db.update(cvFile).set({ url: "" }).where(sql`url LIKE '%example.com%'`);
   }
 }

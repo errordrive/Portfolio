@@ -3,11 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   api,
   type HeroData, type AboutData, type SkillsData, type ExperienceData, type ProjectsData,
+  type ContactData, type ContactSocialLink,
   type Skill, type TimelineEntry, type Project, type Highlight, type StatItem,
 } from "@/lib/api";
 import { Save, Plus, Trash2, ChevronUp, ChevronDown, CheckCircle, Eye, EyeOff, Pencil, X } from "lucide-react";
 
-const TABS = ["Hero", "About", "Skills", "Experience", "Projects"] as const;
+const TABS = ["Hero", "About", "Skills", "Experience", "Projects", "Contact"] as const;
 type Tab = typeof TABS[number];
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
@@ -486,6 +487,104 @@ function ProjectsTab({ initialData, initialVisible, onToast }: {
   );
 }
 
+// ─── Contact Tab ─────────────────────────────────────────────────────────────
+
+const DEFAULT_SOCIAL: ContactSocialLink = { platform: "github", label: "", href: "" };
+const PLATFORM_OPTIONS = ["github", "linkedin", "twitter", "telegram", "youtube", "discord", "other"];
+
+function ContactTab({ initialData, initialVisible, onToast }: {
+  initialData: ContactData; initialVisible: boolean; onToast: TabToast;
+}) {
+  const queryClient = useQueryClient();
+  const [data, setData] = useState<ContactData>(initialData);
+  const [visible, setVisible] = useState(initialVisible);
+
+  const mutation = useMutation({
+    mutationFn: () => api.admin.content.update("contact", data, visible),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["admin-content"] }); onToast("success", "Contact saved"); },
+    onError: (e: unknown) => onToast("error", e instanceof Error ? e.message : "Failed to save"),
+  });
+
+  const socials = data.socials ?? [];
+  const setSocials = (arr: ContactSocialLink[]) => setData(d => ({ ...d, socials: arr }));
+
+  const updateSocial = (i: number, field: keyof ContactSocialLink, val: string) => {
+    const arr = [...socials];
+    arr[i] = { ...arr[i], [field]: val };
+    setSocials(arr);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <VisibilityToggle visible={visible} onChange={setVisible} />
+        <SaveBtn onSave={() => mutation.mutate()} isPending={mutation.isPending} label="Save Contact" />
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        <Field label="Email" value={data.email ?? ""} onChange={v => setData(d => ({ ...d, email: v }))} placeholder="nayem@nayem.me" />
+        <Field label="Location" value={data.location ?? ""} onChange={v => setData(d => ({ ...d, location: v }))} placeholder="Bangladesh 🇧🇩" />
+      </div>
+
+      <Field
+        label="Bio / Intro text"
+        value={data.bio ?? ""}
+        onChange={v => setData(d => ({ ...d, bio: v }))}
+        textarea rows={3}
+        placeholder="Whether you need an AI solution, want to vibe-code together..."
+      />
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Social Links</label>
+          <button
+            onClick={() => setSocials([...socials, { ...DEFAULT_SOCIAL }])}
+            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+          >
+            <Plus className="w-3 h-3" /> Add Link
+          </button>
+        </div>
+        <div className="space-y-2">
+          {socials.map((s, i) => (
+            <div key={i} className="flex gap-2 items-center">
+              <select
+                value={s.platform}
+                onChange={e => updateSocial(i, "platform", e.target.value)}
+                className={`w-28 ${INPUT_CLS}`}
+              >
+                {PLATFORM_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <input
+                type="text"
+                value={s.label}
+                placeholder="Label (e.g. GitHub)"
+                onChange={e => updateSocial(i, "label", e.target.value)}
+                className={`w-32 ${INPUT_CLS}`}
+              />
+              <input
+                type="text"
+                value={s.href}
+                placeholder="https://..."
+                onChange={e => updateSocial(i, "href", e.target.value)}
+                className={`flex-1 ${INPUT_CLS}`}
+              />
+              <button
+                onClick={() => setSocials(socials.filter((_, j) => j !== i))}
+                className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+          {socials.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">No social links yet. Click "Add Link" to add one.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main ContentManager ─────────────────────────────────────────────────────
 
 const DEFAULT_HERO: HeroData = { name: "", statusBadge: "", tagline: "", body: "", roles: [], ctaPrimary: { label: "", href: "" }, ctaSecondary: { label: "", href: "" }, stats: [] };
@@ -493,6 +592,7 @@ const DEFAULT_ABOUT: AboutData = { heading: "", yearsLabel: "", bio: [], highlig
 const DEFAULT_SKILLS: SkillsData = { skills: [] };
 const DEFAULT_EXPERIENCE: ExperienceData = { timeline: [] };
 const DEFAULT_PROJECTS: ProjectsData = { projects: [] };
+const DEFAULT_CONTACT: ContactData = { bio: "", email: "", location: "", socials: [] };
 
 export default function ContentManager() {
   const [activeTab, setActiveTab] = useState<Tab>("Hero");
@@ -524,6 +624,7 @@ export default function ContentManager() {
   const skills = content.skills ?? { data: DEFAULT_SKILLS, visible: true };
   const experience = content.experience ?? { data: DEFAULT_EXPERIENCE, visible: true };
   const projects = content.projects ?? { data: DEFAULT_PROJECTS, visible: true };
+  const contact = content.contact ?? { data: DEFAULT_CONTACT, visible: true };
 
   return (
     <div className="max-w-4xl">
@@ -542,6 +643,7 @@ export default function ContentManager() {
         {activeTab === "Skills" && <SkillsTab key="skills" initialData={skills.data} initialVisible={skills.visible} onToast={handleToast} />}
         {activeTab === "Experience" && <ExperienceTab key="experience" initialData={experience.data} initialVisible={experience.visible} onToast={handleToast} />}
         {activeTab === "Projects" && <ProjectsTab key="projects" initialData={projects.data} initialVisible={projects.visible} onToast={handleToast} />}
+        {activeTab === "Contact" && <ContactTab key="contact" initialData={contact.data as ContactData} initialVisible={contact.visible} onToast={handleToast} />}
       </div>
     </div>
   );
