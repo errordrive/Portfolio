@@ -1,10 +1,13 @@
 import { Router, type Request, type Response } from "express";
 import { db, siteSettings } from "@workspace/db";
 import { requireAuth } from "../../middlewares/auth.js";
+import { z } from "zod";
 
 const router = Router();
 
 router.use(requireAuth);
+
+const SettingsUpdateSchema = z.record(z.string(), z.string());
 
 router.get("/", async (_req: Request, res: Response) => {
   try {
@@ -19,18 +22,18 @@ router.get("/", async (_req: Request, res: Response) => {
 
 router.put("/", async (req: Request, res: Response) => {
   try {
-    const updates = req.body as Record<string, string>;
-    if (typeof updates !== "object" || Array.isArray(updates)) {
-      res.status(400).json({ error: "Expected key/value object" });
+    const parsed = SettingsUpdateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Expected an object of string key/value pairs", details: parsed.error.flatten() });
       return;
     }
-    for (const [key, value] of Object.entries(updates)) {
+    for (const [key, value] of Object.entries(parsed.data)) {
       await db
         .insert(siteSettings)
-        .values({ key, value: String(value), updatedAt: new Date() })
+        .values({ key, value, updatedAt: new Date() })
         .onConflictDoUpdate({
           target: siteSettings.key,
-          set: { value: String(value), updatedAt: new Date() },
+          set: { value, updatedAt: new Date() },
         });
     }
     res.json({ success: true });

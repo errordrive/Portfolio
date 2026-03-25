@@ -2,10 +2,16 @@ import { Router, type Request, type Response } from "express";
 import { db, contentSections } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../../middlewares/auth.js";
+import { z } from "zod";
 
 const router = Router();
 
 router.use(requireAuth);
+
+const ContentUpdateSchema = z.object({
+  data: z.record(z.unknown()).optional(),
+  visible: z.boolean().optional(),
+});
 
 router.get("/", async (_req: Request, res: Response) => {
   try {
@@ -23,7 +29,12 @@ router.get("/", async (_req: Request, res: Response) => {
 router.put("/:section", async (req: Request, res: Response) => {
   try {
     const { section } = req.params;
-    const { data, visible } = req.body;
+    const parsed = ContentUpdateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid input", details: parsed.error.flatten() });
+      return;
+    }
+    const { data, visible } = parsed.data;
 
     const existing = await db
       .select()
@@ -40,7 +51,7 @@ router.put("/:section", async (req: Request, res: Response) => {
       .update(contentSections)
       .set({
         data: data !== undefined ? data : existing[0].data,
-        visible: visible !== undefined ? Boolean(visible) : existing[0].visible,
+        visible: visible !== undefined ? visible : existing[0].visible,
         updatedAt: new Date(),
       })
       .where(eq(contentSections.section, section));

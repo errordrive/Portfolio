@@ -4,11 +4,9 @@ import jwt from "jsonwebtoken";
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("JWT_SECRET environment variable is required in production");
-    }
-    console.warn("[auth] JWT_SECRET not set — using insecure dev fallback. Set JWT_SECRET for production.");
-    return "cms-dev-secret-not-for-production";
+    throw new Error(
+      "JWT_SECRET environment variable is required. Set it in your environment before starting the server."
+    );
   }
   return secret;
 }
