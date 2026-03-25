@@ -1,8 +1,10 @@
-import { motion } from "framer-motion";
-import { useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { useContent } from "../hooks/useContent";
+import SkeletonSection from "./SkeletonSection";
+import type { Skill, SkillsData } from "../lib/api";
 
-const skills = [
+const DEFAULT_SKILLS: Skill[] = [
   { name: "Vibe Coding", icon: "✨", level: 95, category: "Craft", desc: "Ship fast, iterate faster, stay in the flow" },
   { name: "AI Tool Usage", icon: "🤖", level: 92, category: "AI", desc: "ChatGPT, Claude, Cursor, Gemini & more" },
   { name: "Prompt Engineering", icon: "💬", level: 88, category: "AI", desc: "Getting AI to do exactly what you need" },
@@ -13,21 +15,39 @@ const skills = [
   { name: "Builder Mindset", icon: "🚀", level: 98, category: "Craft", desc: "Ideas → shipped products, fast and fun" },
 ];
 
-const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
+const DEFAULT_SKILLS_DATA: SkillsData = { skills: DEFAULT_SKILLS };
+
+const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   AI:    { bg: "rgba(249,115,22,0.12)",  text: "#f97316", border: "rgba(249,115,22,0.25)" },
   RE:    { bg: "rgba(139,92,246,0.12)",  text: "#8b5cf6", border: "rgba(139,92,246,0.25)" },
   Dev:   { bg: "rgba(16,185,129,0.12)",  text: "#10b981", border: "rgba(16,185,129,0.25)" },
   Craft: { bg: "rgba(59,130,246,0.12)",  text: "#3b82f6", border: "rgba(59,130,246,0.25)" },
 };
 
+const DEFAULT_COLOR = { bg: "rgba(100,116,139,0.12)", text: "#64748b", border: "rgba(100,116,139,0.25)" };
+
+function getCategoryColor(category: string) {
+  return CATEGORY_COLORS[category] ?? DEFAULT_COLOR;
+}
+
 export default function Skills() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+  const { data: content, isLoading } = useContent();
+
+  if (isLoading && !content) return <SkeletonSection height="380px" />;
+
+  const section = content?.skills;
+  if (section?.visible === false) return null;
+
+  const d: SkillsData = section?.data ?? DEFAULT_SKILLS_DATA;
+  const skills = d.skills?.length ? d.skills : DEFAULT_SKILLS;
+
+  const categories = Array.from(new Set(skills.map((s) => s.category)));
 
   return (
     <section id="skills" className="relative py-24 lg:py-32 overflow-hidden">
       <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -42,24 +62,25 @@ export default function Skills() {
             Honest skills, honest levels. No fake expertise — just what I genuinely do and how comfortable I am doing it.
           </p>
 
-          {/* Category legend */}
           <div className="flex flex-wrap justify-center gap-3 mt-6">
-            {Object.entries(categoryColors).map(([cat, c]) => (
-              <span
-                key={cat}
-                className="px-3 py-1 rounded-full text-xs font-bold"
-                style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}` }}
-              >
-                {cat === "AI" ? "🤖 AI Tools" : cat === "RE" ? "🔓 Android RE" : cat === "Dev" ? "💻 Dev" : "✨ Craft"}
-              </span>
-            ))}
+            {categories.map((cat) => {
+              const c = getCategoryColor(cat);
+              return (
+                <span
+                  key={cat}
+                  className="px-3 py-1 rounded-full text-xs font-bold"
+                  style={{ background: c.bg, color: c.text, border: `1px solid ${c.border}` }}
+                >
+                  {cat}
+                </span>
+              );
+            })}
           </div>
         </motion.div>
 
-        {/* Skills grid — 2 cols on sm, 4 cols on lg for fewer render items */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {skills.map((skill, i) => {
-            const c = categoryColors[skill.category];
+            const c = getCategoryColor(skill.category);
             return (
               <motion.div
                 key={skill.name}
@@ -87,7 +108,6 @@ export default function Skills() {
                 <div className="font-bold text-sm text-foreground mb-1">{skill.name}</div>
                 <div className="text-xs text-muted-foreground mb-3 leading-relaxed">{skill.desc}</div>
 
-                {/* Progress bar */}
                 <div className="h-1.5 bg-border/50 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}

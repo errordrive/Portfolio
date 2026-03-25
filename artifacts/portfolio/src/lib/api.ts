@@ -71,6 +71,14 @@ export const api = {
     getBySlug: (slug: string) => request<BlogPost>(`/blog/${slug}`),
   },
 
+  contact: {
+    submit: (data: { name: string; email: string; subject?: string; message: string }) =>
+      request<{ success: boolean; message: string }>("/contact", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
+
   // Admin
   admin: {
     content: {

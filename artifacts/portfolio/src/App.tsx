@@ -1,5 +1,7 @@
 import { lazy, Suspense, useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HelmetProvider } from "react-helmet-async";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import About from "./components/About";
@@ -8,8 +10,16 @@ import Projects from "./components/Projects";
 import Experience from "./components/Experience";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
+import BlogList from "./pages/BlogList";
+import BlogDetail from "./pages/BlogDetail";
 
 const AdminApp = lazy(() => import("./pages/admin/AdminApp"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 60_000, retry: 1 },
+  },
+});
 
 type Theme = "dark" | "light";
 
@@ -19,6 +29,14 @@ function getInitialTheme(): Theme {
     if (saved) return saved;
   }
   return "dark";
+}
+
+function BlogListPage() {
+  return <BlogList />;
+}
+
+function BlogDetailPage() {
+  return <BlogDetail />;
 }
 
 function Portfolio({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => void }) {
@@ -56,16 +74,22 @@ export default function App() {
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   return (
-    <Routes>
-      <Route
-        path="/admin/*"
-        element={
-          <Suspense fallback={<AdminFallback />}>
-            <AdminApp />
-          </Suspense>
-        }
-      />
-      <Route path="*" element={<Portfolio theme={theme} toggleTheme={toggleTheme} />} />
-    </Routes>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <Routes>
+          <Route
+            path="/admin/*"
+            element={
+              <Suspense fallback={<AdminFallback />}>
+                <AdminApp />
+              </Suspense>
+            }
+          />
+          <Route path="/blog/:slug" element={<BlogDetailPage />} />
+          <Route path="/blog" element={<BlogListPage />} />
+          <Route path="*" element={<Portfolio theme={theme} toggleTheme={toggleTheme} />} />
+        </Routes>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 }

@@ -1,7 +1,7 @@
-import { motion } from "framer-motion";
-import { useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Send, Github, Linkedin, Twitter, MessageCircle, Mail, MapPin, ExternalLink } from "lucide-react";
+import { Send, Github, Linkedin, Twitter, MessageCircle, Mail, MapPin, ExternalLink, CheckCircle, AlertCircle } from "lucide-react";
+import { api } from "../lib/api";
 
 const socials = [
   { icon: Github, label: "GitHub", href: "https://github.com", color: "#e2e8f0" },
@@ -10,19 +10,36 @@ const socials = [
   { icon: MessageCircle, label: "Telegram", href: "https://t.me", color: "#0ea5e9" },
 ];
 
+type FormStatus = "idle" | "sending" | "success" | "error";
+
 export default function Contact() {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<FormStatus>("idle");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const subject = encodeURIComponent(`Portfolio Contact from ${formData.name}`);
-    const body = encodeURIComponent(`Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`);
-    window.location.href = `mailto:nayem@nayem.me?subject=${subject}&body=${body}`;
-    setSent(true);
-    setTimeout(() => setSent(false), 3000);
+    setStatus("sending");
+    setErrorMsg("");
+
+    try {
+      await api.contact.submit({
+        name: formData.name,
+        email: formData.email,
+        subject: `Portfolio Contact from ${formData.name}`,
+        message: formData.message,
+      });
+      setStatus("success");
+      setFormData({ name: "", email: "", message: "" });
+      setTimeout(() => setStatus("idle"), 5000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      setErrorMsg(msg);
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 5000);
+    }
   };
 
   return (
@@ -31,7 +48,6 @@ export default function Contact() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/8 rounded-full blur-3xl" />
 
       <div ref={ref} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
@@ -48,7 +64,6 @@ export default function Contact() {
         </motion.div>
 
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Left: Info + socials */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
@@ -83,7 +98,6 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Socials */}
               <div>
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">Find Me Online</div>
                 <div className="grid grid-cols-2 gap-3">
@@ -109,7 +123,6 @@ export default function Contact() {
             </div>
           </motion.div>
 
-          {/* Right: Contact form */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={inView ? { opacity: 1, x: 0 } : {}}
@@ -124,7 +137,8 @@ export default function Contact() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="John Doe"
-                  className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                  disabled={status === "sending"}
+                  className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all disabled:opacity-60"
                 />
               </div>
               <div>
@@ -135,7 +149,8 @@ export default function Contact() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="john@example.com"
-                  className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                  disabled={status === "sending"}
+                  className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all disabled:opacity-60"
                 />
               </div>
               <div>
@@ -146,16 +161,39 @@ export default function Contact() {
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Tell me about your project or idea..."
-                  className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all resize-none"
+                  disabled={status === "sending"}
+                  className="w-full px-4 py-3 rounded-xl bg-muted/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all resize-none disabled:opacity-60"
                 />
               </div>
+
+              {status === "success" && (
+                <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
+                  <CheckCircle className="w-4 h-4 shrink-0" />
+                  Message sent! I'll get back to you soon.
+                </div>
+              )}
+              {status === "error" && (
+                <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {errorMsg || "Something went wrong. Please try again."}
+                </div>
+              )}
+
               <motion.button
                 type="submit"
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-primary text-white font-bold text-sm neon-glow hover:bg-primary/90 transition-all"
+                disabled={status === "sending" || status === "success"}
+                whileHover={status === "idle" ? { scale: 1.02, y: -1 } : {}}
+                whileTap={status === "idle" ? { scale: 0.98 } : {}}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-primary text-white font-bold text-sm neon-glow hover:bg-primary/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {sent ? "✅ Message Sent!" : (<><Send className="w-4 h-4" /> Send Message</>)}
+                {status === "sending" && (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending…
+                  </span>
+                )}
+                {status === "success" && <><CheckCircle className="w-4 h-4" /> Sent!</>}
+                {(status === "idle" || status === "error") && <><Send className="w-4 h-4" /> Send Message</>}
               </motion.button>
             </form>
           </motion.div>

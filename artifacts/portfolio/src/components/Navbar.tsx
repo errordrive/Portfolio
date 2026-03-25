@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sun, Moon, Code2 } from "lucide-react";
+import { Menu, X, Sun, Moon, Code2, Download } from "lucide-react";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 
 const navLinks = [
   { label: "Home", href: "#hero" },
@@ -8,6 +9,7 @@ const navLinks = [
   { label: "Skills", href: "#skills" },
   { label: "Projects", href: "#projects" },
   { label: "Experience", href: "#experience" },
+  { label: "Blog", href: "/blog" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -20,6 +22,7 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
   const [activeSection, setActiveSection] = useState("hero");
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { siteTitle, cvUrl } = useSiteSettings();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -28,18 +31,18 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
   }, []);
 
   useEffect(() => {
-    const sections = navLinks.map((l) => l.href.replace("#", ""));
+    const sectionIds = navLinks
+      .filter((l) => l.href.startsWith("#"))
+      .map((l) => l.href.replace("#", ""));
     const observers: IntersectionObserver[] = [];
 
-    sections.forEach((id) => {
+    sectionIds.forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       const obs = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              setActiveSection(id);
-            }
+            if (entry.isIntersecting) setActiveSection(id);
           });
         },
         { threshold: 0.25, rootMargin: "-80px 0px -40% 0px" }
@@ -53,8 +56,12 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
 
   const handleNavClick = (href: string) => {
     setMenuOpen(false);
-    const id = href.replace("#", "");
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    if (href.startsWith("#")) {
+      const id = href.replace("#", "");
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      window.location.href = href;
+    }
   };
 
   return (
@@ -63,13 +70,10 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "py-3 glass shadow-lg shadow-black/20"
-          : "py-5 bg-transparent"
+        scrolled ? "py-3 glass shadow-lg shadow-black/20" : "py-5 bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* Logo */}
         <motion.a
           href="#hero"
           onClick={(e) => { e.preventDefault(); handleNavClick("#hero"); }}
@@ -79,22 +83,20 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center neon-glow">
             <Code2 className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight gradient-text">nayem.me</span>
+          <span className="font-bold text-lg tracking-tight gradient-text">{siteTitle}</span>
         </motion.a>
 
-        {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
-            const id = link.href.replace("#", "");
-            const isActive = activeSection === id;
+            const isAnchor = link.href.startsWith("#");
+            const id = isAnchor ? link.href.replace("#", "") : link.label.toLowerCase();
+            const isActive = isAnchor ? activeSection === id : false;
             return (
               <button
                 key={link.href}
                 onClick={() => handleNavClick(link.href)}
                 className={`relative px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                  isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {isActive && (
@@ -110,7 +112,6 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
           })}
         </div>
 
-        {/* Right side */}
         <div className="flex items-center gap-3">
           <motion.button
             whileHover={{ scale: 1.1 }}
@@ -122,6 +123,19 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </motion.button>
 
+          {cvUrl && (
+            <motion.a
+              href={cvUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg glass border border-border text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" /> CV
+            </motion.a>
+          )}
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -131,7 +145,6 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
             Hire Me
           </motion.button>
 
-          {/* Mobile menu button */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="md:hidden w-9 h-9 rounded-lg glass flex items-center justify-center text-muted-foreground"
@@ -141,7 +154,6 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -153,8 +165,9 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
           >
             <div className="px-4 py-4 flex flex-col gap-1">
               {navLinks.map((link) => {
-                const id = link.href.replace("#", "");
-                const isActive = activeSection === id;
+                const isAnchor = link.href.startsWith("#");
+                const id = isAnchor ? link.href.replace("#", "") : "";
+                const isActive = isAnchor ? activeSection === id : false;
                 return (
                   <button
                     key={link.href}
@@ -169,6 +182,16 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
                   </button>
                 );
               })}
+              {cvUrl && (
+                <a
+                  href={cvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download CV
+                </a>
+              )}
             </div>
           </motion.div>
         )}
