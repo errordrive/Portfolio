@@ -1,11 +1,11 @@
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
 
 export default function ChangePassword() {
   const [form, setForm] = useState({ current: "", newPw: "", confirm: "" });
   const [show, setShow] = useState({ current: false, newPw: false, confirm: false });
-  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   function showToast(type: "success" | "error", msg: string) {
@@ -13,21 +13,21 @@ export default function ChangePassword() {
     setTimeout(() => setToast(null), 3500);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const mutation = useMutation({
+    mutationFn: ({ current, newPw }: { current: string; newPw: string }) =>
+      api.admin.password.change(current, newPw),
+    onSuccess: () => {
+      showToast("success", "Password changed successfully");
+      setForm({ current: "", newPw: "", confirm: "" });
+    },
+    onError: (e: unknown) => showToast("error", e instanceof Error ? e.message : "Failed to change password"),
+  });
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (form.newPw !== form.confirm) return showToast("error", "Passwords do not match");
     if (form.newPw.length < 6) return showToast("error", "New password must be at least 6 characters");
-
-    setLoading(true);
-    try {
-      await api.admin.password.change(form.current, form.newPw);
-      showToast("success", "Password changed successfully");
-      setForm({ current: "", newPw: "", confirm: "" });
-    } catch (e: unknown) {
-      showToast("error", e instanceof Error ? e.message : "Failed to change password");
-    } finally {
-      setLoading(false);
-    }
+    mutation.mutate({ current: form.current, newPw: form.newPw });
   }
 
   type FieldKey = keyof typeof form;
@@ -72,11 +72,11 @@ export default function ChangePassword() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={mutation.isPending}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60 mt-2"
         >
           <Lock className="w-4 h-4" />
-          {loading ? "Changing…" : "Change Password"}
+          {mutation.isPending ? "Changing…" : "Change Password"}
         </button>
       </form>
     </div>

@@ -1,41 +1,35 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type Message } from "@/lib/api";
 import { Trash2, ChevronDown, ChevronUp, Mail, MailOpen } from "lucide-react";
 
 export default function Messages() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [toggling, setToggling] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState<number | null>(null);
 
-  useEffect(() => {
-    api.admin.messages.list().then(setMessages).catch(console.error).finally(() => setLoading(false));
-  }, []);
+  const { data: messages = [], isLoading } = useQuery<Message[]>({
+    queryKey: ["admin-messages"],
+    queryFn: () => api.admin.messages.list(),
+  });
 
-  async function toggleRead(msg: Message) {
-    setToggling(msg.id);
-    try {
-      const updated = await api.admin.messages.toggleRead(msg.id);
-      setMessages(ms => ms.map(m => m.id === msg.id ? updated : m));
-    } catch (e) {
-      alert("Failed to update message");
-    } finally {
-      setToggling(null);
-    }
-  }
+  const toggleMutation = useMutation({
+    mutationFn: (id: number) => api.admin.messages.toggleRead(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-messages"] }),
+    onError: () => alert("Failed to update message"),
+  });
 
-  async function deleteMsg(msg: Message) {
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.admin.messages.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-messages"] });
+      setExpanded(null);
+    },
+    onError: () => alert("Failed to delete message"),
+  });
+
+  function handleDelete(msg: Message) {
     if (!confirm(`Delete message from ${msg.name}?`)) return;
-    setDeleting(msg.id);
-    try {
-      await api.admin.messages.delete(msg.id);
-      setMessages(ms => ms.filter(m => m.id !== msg.id));
-    } catch (e) {
-      alert("Failed to delete message");
-    } finally {
-      setDeleting(null);
-    }
+    deleteMutation.mutate(msg.id);
   }
 
   const unread = messages.filter(m => !m.read).length;
@@ -48,7 +42,7 @@ export default function Messages() {
       </p>
 
       <div className="glass rounded-2xl border border-white/10 overflow-hidden">
-        {loading ? (
+        {isLoading ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Loading…</div>
         ) : messages.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground text-sm">No messages yet</div>
@@ -86,16 +80,16 @@ export default function Messages() {
                         Reply via email
                       </a>
                       <button
-                        onClick={() => toggleRead(msg)}
-                        disabled={toggling === msg.id}
+                        onClick={() => toggleMutation.mutate(msg.id)}
+                        disabled={toggleMutation.isPending && toggleMutation.variables === msg.id}
                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:border-white/20 transition-colors disabled:opacity-50"
                       >
                         {msg.read ? <Mail className="w-3 h-3" /> : <MailOpen className="w-3 h-3" />}
                         {msg.read ? "Mark unread" : "Mark read"}
                       </button>
                       <button
-                        onClick={() => deleteMsg(msg)}
-                        disabled={deleting === msg.id}
+                        onClick={() => handleDelete(msg)}
+                        disabled={deleteMutation.isPending && deleteMutation.variables === msg.id}
                         className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                       >
                         <Trash2 className="w-3 h-3" />

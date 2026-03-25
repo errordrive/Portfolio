@@ -1,52 +1,32 @@
-import { useEffect, useState } from "react";
-import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { api, type BlogPost, type Message } from "@/lib/api";
 import { FileText, MessageSquare, CheckCircle, Layers } from "lucide-react";
 
-interface Stats {
-  totalPosts: number;
-  publishedPosts: number;
-  unreadMessages: number;
-  totalProjects: number;
-}
-
 export default function Dashboard() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: posts = [], isLoading: postsLoading } = useQuery<BlogPost[]>({
+    queryKey: ["admin-posts"],
+    queryFn: () => api.admin.blog.list(),
+  });
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const [postsData, msgsData, contentData] = await Promise.all([
-          api.admin.blog.list(),
-          api.admin.messages.list(),
-          api.admin.content.getAll(),
-        ]);
-        setPosts(postsData);
-        setMessages(msgsData);
-        const projects = (contentData?.projects?.data as any)?.projects ?? [];
-        setStats({
-          totalPosts: postsData.length,
-          publishedPosts: postsData.filter(p => p.published).length,
-          unreadMessages: msgsData.filter(m => !m.read).length,
-          totalProjects: projects.length,
-        });
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
+  const { data: messages = [], isLoading: msgsLoading } = useQuery<Message[]>({
+    queryKey: ["admin-messages"],
+    queryFn: () => api.admin.messages.list(),
+  });
+
+  const { data: content, isLoading: contentLoading } = useQuery({
+    queryKey: ["admin-content"],
+    queryFn: () => api.admin.content.getAll(),
+  });
+
+  const loading = postsLoading || msgsLoading || contentLoading;
+  const projects = (content?.projects?.data as any)?.projects ?? [];
 
   const statCards = [
-    { label: "Total Posts", value: stats?.totalPosts ?? "—", icon: FileText, color: "#f97316" },
-    { label: "Published", value: stats?.publishedPosts ?? "—", icon: CheckCircle, color: "#10b981" },
-    { label: "Unread Messages", value: stats?.unreadMessages ?? "—", icon: MessageSquare, color: "#8b5cf6" },
-    { label: "Projects", value: stats?.totalProjects ?? "—", icon: Layers, color: "#3b82f6" },
+    { label: "Total Posts", value: posts.length, icon: FileText, color: "#f97316" },
+    { label: "Published", value: posts.filter(p => p.published).length, icon: CheckCircle, color: "#10b981" },
+    { label: "Unread Messages", value: messages.filter(m => !m.read).length, icon: MessageSquare, color: "#8b5cf6" },
+    { label: "Projects", value: projects.length, icon: Layers, color: "#3b82f6" },
   ];
 
   if (loading) {
@@ -61,7 +41,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 max-w-5xl">
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="glass rounded-2xl p-5 border border-white/10">
@@ -77,13 +56,10 @@ export default function Dashboard() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Messages */}
         <div className="glass rounded-2xl border border-white/10 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
             <h3 className="font-bold text-sm text-foreground">Recent Messages</h3>
-            <Link href="/admin/messages">
-              <a className="text-xs text-primary hover:text-primary/80 transition-colors">View all</a>
-            </Link>
+            <Link to="/admin/messages" className="text-xs text-primary hover:text-primary/80 transition-colors">View all</Link>
           </div>
           <div className="divide-y divide-white/5">
             {messages.slice(0, 5).length === 0 ? (
@@ -103,13 +79,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Posts */}
         <div className="glass rounded-2xl border border-white/10 overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
             <h3 className="font-bold text-sm text-foreground">Recent Blog Posts</h3>
-            <Link href="/admin/blog">
-              <a className="text-xs text-primary hover:text-primary/80 transition-colors">View all</a>
-            </Link>
+            <Link to="/admin/blog" className="text-xs text-primary hover:text-primary/80 transition-colors">View all</Link>
           </div>
           <div className="divide-y divide-white/5">
             {posts.slice(0, 5).length === 0 ? (
@@ -120,9 +93,7 @@ export default function Dashboard() {
                   {p.published ? "Live" : "Draft"}
                 </div>
                 <div className="text-sm text-foreground truncate flex-1">{p.title}</div>
-                <Link href={`/admin/blog/${p.id}/edit`}>
-                  <a className="text-xs text-primary shrink-0 hover:text-primary/80">Edit</a>
-                </Link>
+                <Link to={`/admin/blog/${p.id}/edit`} className="text-xs text-primary shrink-0 hover:text-primary/80">Edit</Link>
               </div>
             ))}
           </div>

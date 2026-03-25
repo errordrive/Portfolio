@@ -1,10 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
-import { useLocation, useRoute } from "wouter";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { common, createLowlight } from "lowlight";
 import { api, type BlogPost } from "@/lib/api";
 import {
   ArrowLeft, Save, Eye, EyeOff,
@@ -12,6 +15,8 @@ import {
   List, ListOrdered, Code, Link2, ImageIcon, Quote,
   Undo2, Redo2, CheckCircle
 } from "lucide-react";
+
+const lowlight = createLowlight(common);
 
 function slugify(str: string) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -30,35 +35,50 @@ function ToolbarBtn({ active, onClick, title, children }: { active?: boolean; on
   );
 }
 
-export default function BlogEditor() {
-  const [, navigate] = useLocation();
-  const [matchEdit, paramsEdit] = useRoute("/admin/blog/:id/edit");
-  const isNew = !matchEdit;
-  const postId = matchEdit ? Number(paramsEdit!.id) : null;
+type PostForm = {
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage: string;
+  tags: string;
+  metaTitle: string;
+  metaDescription: string;
+  published: boolean;
+  adsEnabled: boolean;
+  adTop: boolean;
+  adMiddle: boolean;
+  adBottom: boolean;
+  adScript: string;
+};
 
-  const [form, setForm] = useState({
-    title: "",
-    slug: "",
-    excerpt: "",
-    featuredImage: "",
-    tags: "",
-    metaTitle: "",
-    metaDescription: "",
-    published: false,
-    adsEnabled: false,
-    adTop: false,
-    adMiddle: false,
-    adBottom: false,
-    adScript: "",
+export default function BlogEditor() {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
+  const queryClient = useQueryClient();
+  const isNew = !id;
+  const postId = id ? Number(id) : null;
+
+  const [form, setForm] = useState<PostForm>({
+    title: "", slug: "", excerpt: "", featuredImage: "", tags: "",
+    metaTitle: "", metaDescription: "", published: false,
+    adsEnabled: false, adTop: false, adMiddle: false, adBottom: false, adScript: "",
   });
-  const [loading, setLoading] = useState(!isNew);
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [autoSlug, setAutoSlug] = useState(isNew);
+  const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
+  const [editorReady, setEditorReady] = useState(false);
+
+  const { data: posts = [] } = useQuery<BlogPost[]>({
+    queryKey: ["admin-posts"],
+    queryFn: () => api.admin.blog.list(),
+    enabled: !isNew,
+  });
+
+  const post = posts.find(p => p.id === postId);
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ codeBlock: false }),
+      CodeBlockLowlight.configure({ lowlight }),
       Link.configure({ openOnClick: false }),
       Image,
       Placeholder.configure({ placeholder: "Write your post…" }),
@@ -68,64 +88,67 @@ export default function BlogEditor() {
         class: "prose prose-invert max-w-none min-h-[300px] px-4 py-4 focus:outline-none text-foreground text-sm leading-relaxed",
       },
     },
+    onCreate: () => setEditorReady(true),
   });
 
   useEffect(() => {
-    if (!postId) return;
-    api.admin.blog.list().then(posts => {
-      const post = posts.find(p => p.id === postId);
-      if (!post) { navigate("/admin/blog"); return; }
-      setForm({
-        title: post.title,
-        slug: post.slug,
-        excerpt: post.excerpt || "",
-        featuredImage: post.featuredImage || "",
-        tags: (post.tags || []).join(", "),
-        metaTitle: post.metaTitle || "",
-        metaDescription: post.metaDescription || "",
-        published: post.published,
-        adsEnabled: post.adsEnabled || false,
-        adTop: post.adTop || false,
-        adMiddle: post.adMiddle || false,
-        adBottom: post.adBottom || false,
-        adScript: post.adScript || "",
-      });
-      if (editor && post.content) editor.commands.setContent(post.content);
-      setAutoSlug(false);
-    }).catch(() => navigate("/admin/blog")).finally(() => setLoading(false));
-  }, [postId, editor]);
-
-  function handleTitleChange(title: string) {
-    setForm(f => ({ ...f, title, slug: autoSlug ? slugify(title) : f.slug }));
-  }
+    if (!post || !editor || !editorReady) return;
+    setForm({
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt || "",
+      featuredImage: post.featuredImage || "",
+      tags: (post.tags || []).join(", "),
+      metaTitle: post.metaTitle || "",
+      metaDescription: post.metaDescription || "",
+      published: post.published,
+      adsEnabled: post.adsEnabled || false,
+      adTop: post.adTop || false,
+      adMiddle: post.adMiddle || false,
+      adBottom: post.adBottom || false,
+      adScript: post.adScript || "",
+    });
+    if (post.content) editor.commands.setContent(post.content);
+    setAutoSlug(false);
+  }, [post?.id, editorReady]);
 
   function showToast(type: "success" | "error", msg: string) {
     setToast({ type, msg });
     setTimeout(() => setToast(null), 3500);
   }
 
-  async function handleSave() {
+  const createMutation = useMutation({
+    mutationFn: (payload: Partial<BlogPost>) => api.admin.blog.create(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-posts"] });
+      showToast("success", "Post created");
+      setTimeout(() => navigate("/admin/blog"), 800);
+    },
+    onError: (e: unknown) => showToast("error", e instanceof Error ? e.message : "Failed to create"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: Partial<BlogPost>) => api.admin.blog.update(postId!, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-posts"] });
+      showToast("success", "Post saved");
+    },
+    onError: (e: unknown) => showToast("error", e instanceof Error ? e.message : "Failed to save"),
+  });
+
+  function handleSave() {
     if (!form.title.trim()) return showToast("error", "Title is required");
-    setSaving(true);
-    try {
-      const payload = {
-        ...form,
-        tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
-        content: editor?.getHTML() ?? "",
-      };
-      if (isNew) {
-        await api.admin.blog.create(payload);
-        showToast("success", "Post created");
-        setTimeout(() => navigate("/admin/blog"), 800);
-      } else {
-        await api.admin.blog.update(postId!, payload);
-        showToast("success", "Post saved");
-      }
-    } catch (e: unknown) {
-      showToast("error", e instanceof Error ? e.message : "Failed to save");
-    } finally {
-      setSaving(false);
-    }
+    const payload = {
+      ...form,
+      tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
+      content: editor?.getHTML() ?? "",
+    };
+    if (isNew) createMutation.mutate(payload);
+    else updateMutation.mutate(payload);
+  }
+
+  function handleTitleChange(title: string) {
+    setForm(f => ({ ...f, title, slug: autoSlug ? slugify(title) : f.slug }));
   }
 
   const setLink = useCallback(() => {
@@ -140,7 +163,7 @@ export default function BlogEditor() {
     editor?.chain().focus().setImage({ src: url }).run();
   }, [editor]);
 
-  if (loading) return <div className="text-muted-foreground text-sm">Loading…</div>;
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div className="max-w-4xl space-y-5">
@@ -151,14 +174,13 @@ export default function BlogEditor() {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button onClick={() => navigate("/admin/blog")} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </button>
         <div className="flex-1" />
         <button
-          onClick={() => { setForm(f => ({ ...f, published: !f.published })); }}
+          onClick={() => setForm(f => ({ ...f, published: !f.published }))}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${form.published ? "bg-green-500/15 border-green-500/20 text-green-400 hover:bg-green-500/20" : "border-border text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
         >
           {form.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -174,11 +196,8 @@ export default function BlogEditor() {
         </button>
       </div>
 
-      {/* Main grid */}
       <div className="grid lg:grid-cols-[1fr_280px] gap-5">
-        {/* Left: Content */}
         <div className="space-y-4">
-          {/* Title */}
           <input
             type="text"
             value={form.title}
@@ -187,7 +206,6 @@ export default function BlogEditor() {
             className="w-full px-4 py-3 rounded-xl bg-card border border-white/10 text-foreground text-xl font-bold placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/50 transition-all"
           />
 
-          {/* Slug */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground shrink-0">Slug:</span>
             <input
@@ -198,9 +216,7 @@ export default function BlogEditor() {
             />
           </div>
 
-          {/* TipTap Editor */}
           <div className="glass rounded-2xl border border-white/10 overflow-hidden">
-            {/* Toolbar */}
             <div className="flex items-center gap-0.5 px-3 py-2 border-b border-white/10 flex-wrap">
               <ToolbarBtn active={editor?.isActive("bold")} onClick={() => editor?.chain().focus().toggleBold().run()} title="Bold"><Bold className="w-3.5 h-3.5" /></ToolbarBtn>
               <ToolbarBtn active={editor?.isActive("italic")} onClick={() => editor?.chain().focus().toggleItalic().run()} title="Italic"><Italic className="w-3.5 h-3.5" /></ToolbarBtn>
@@ -224,9 +240,7 @@ export default function BlogEditor() {
           </div>
         </div>
 
-        {/* Right: Meta */}
         <div className="space-y-4">
-          {/* Featured Image */}
           <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Featured Image</h3>
             <input
@@ -241,7 +255,6 @@ export default function BlogEditor() {
             )}
           </div>
 
-          {/* Tags & Excerpt */}
           <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Details</h3>
             <div>
@@ -266,7 +279,6 @@ export default function BlogEditor() {
             </div>
           </div>
 
-          {/* SEO */}
           <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">SEO</h3>
             <div>
@@ -290,7 +302,6 @@ export default function BlogEditor() {
             </div>
           </div>
 
-          {/* AdSense */}
           <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">AdSense</h3>

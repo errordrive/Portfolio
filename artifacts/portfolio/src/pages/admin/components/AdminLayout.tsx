@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, MessageSquare, Settings,
-  Lock, LogOut, Menu, X, PenSquare, ChevronRight
+  Lock, LogOut, Menu, PenSquare, ChevronRight
 } from "lucide-react";
 import { clearToken } from "@/lib/api";
 
@@ -26,11 +26,12 @@ const pageTitles: Record<string, string> = {
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [location, navigate] = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const title = Object.entries(pageTitles).find(([k]) =>
-    location === k || location.startsWith(k + "/")
+    location.pathname === k || location.pathname.startsWith(k + "/")
   )?.[1] ?? "Admin";
 
   function handleLogout() {
@@ -40,7 +41,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      {/* Logo */}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-black text-sm">N</div>
         <div>
@@ -49,30 +49,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {nav.map(({ href, label, icon: Icon }) => {
-          const active = location === href || (href !== "/admin/dashboard" && location.startsWith(href));
+          const active = location.pathname === href || (href !== "/admin/dashboard" && location.pathname.startsWith(href));
           return (
-            <Link key={href} href={href}>
-              <a
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  active
-                    ? "bg-primary text-white shadow-lg shadow-primary/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {label}
-                {active && <ChevronRight className="w-3 h-3 ml-auto" />}
-              </a>
+            <Link
+              key={href}
+              to={href}
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                active
+                  ? "bg-primary text-white shadow-lg shadow-primary/20"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+              }`}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {label}
+              {active && <ChevronRight className="w-3 h-3 ml-auto" />}
             </Link>
           );
         })}
       </nav>
 
-      {/* Logout */}
       <div className="px-3 py-4 border-t border-white/10">
         <button
           onClick={handleLogout}
@@ -87,12 +85,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-60 flex-col fixed inset-y-0 left-0 z-50 border-r border-white/10 bg-card">
         <SidebarContent />
       </aside>
 
-      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
@@ -102,9 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
-        {/* Topbar */}
         <header className="sticky top-0 z-40 flex items-center gap-4 px-6 h-14 border-b border-white/10 bg-background/80 backdrop-blur-md">
           <button
             onClick={() => setSidebarOpen(true)}
@@ -119,7 +113,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>

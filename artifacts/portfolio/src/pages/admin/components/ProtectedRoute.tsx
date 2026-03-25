@@ -1,9 +1,9 @@
-import { Redirect } from "wouter";
+import { Navigate } from "react-router-dom";
 import { isLoggedIn } from "@/lib/api";
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isLoggedIn()) {
-    return <Redirect to="/admin/login" />;
+    return <Navigate to="/admin/login" replace />;
   }
   return <>{children}</>;
 }

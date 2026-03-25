@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, useEffect } from "react";
-import { Switch, Route } from "wouter";
+import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import About from "./components/About";
@@ -56,20 +56,16 @@ export default function App() {
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   return (
-    <Switch>
-      <Route path="/admin/:rest*">
-        <Suspense fallback={<AdminFallback />}>
-          <AdminApp />
-        </Suspense>
-      </Route>
-      <Route path="/admin">
-        <Suspense fallback={<AdminFallback />}>
-          <AdminApp />
-        </Suspense>
-      </Route>
-      <Route>
-        <Portfolio theme={theme} toggleTheme={toggleTheme} />
-      </Route>
-    </Switch>
+    <Routes>
+      <Route
+        path="/admin/*"
+        element={
+          <Suspense fallback={<AdminFallback />}>
+            <AdminApp />
+          </Suspense>
+        }
+      />
+      <Route path="*" element={<Portfolio theme={theme} toggleTheme={toggleTheme} />} />
+    </Routes>
   );
 }

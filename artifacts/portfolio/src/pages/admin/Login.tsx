@@ -1,28 +1,31 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import { api, setToken } from "@/lib/api";
 import { Eye, EyeOff, Lock } from "lucide-react";
 
 export default function Login() {
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
   const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(e: React.FormEvent) {
+  const loginMutation = useMutation({
+    mutationFn: ({ username, password }: { username: string; password: string }) =>
+      api.auth.login(username, password),
+    onSuccess: (data) => {
+      setToken(data.token);
+      navigate("/admin/dashboard");
+    },
+    onError: (err: unknown) => {
+      setError(err instanceof Error ? err.message : "Login failed");
+    },
+  });
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setLoading(true);
-    try {
-      const res = await api.auth.login(form.username, form.password);
-      setToken(res.token);
-      navigate("/admin/dashboard");
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setLoading(false);
-    }
+    loginMutation.mutate(form);
   }
 
   return (
@@ -31,7 +34,6 @@ export default function Login() {
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/6 rounded-full blur-[100px] pointer-events-none" />
 
       <div className="relative w-full max-w-sm">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-primary mx-auto flex items-center justify-center text-white font-black text-2xl mb-4 shadow-lg shadow-primary/30">N</div>
           <h1 className="text-2xl font-black text-foreground">Admin Login</h1>
@@ -82,11 +84,11 @@ export default function Login() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loginMutation.isPending}
             className="w-full py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
           >
             <Lock className="w-4 h-4" />
-            {loading ? "Signing in…" : "Sign In"}
+            {loginMutation.isPending ? "Signing in…" : "Sign In"}
           </button>
         </form>
       </div>
