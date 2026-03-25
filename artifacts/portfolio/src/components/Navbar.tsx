@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Sun, Moon, Code2, Download } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 
 const navLinks = [
@@ -23,6 +24,7 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { siteTitle, cvUrl } = useSiteSettings();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -60,7 +62,7 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
       const id = href.replace("#", "");
       document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     } else {
-      window.location.href = href;
+      navigate(href);
     }
   };
 

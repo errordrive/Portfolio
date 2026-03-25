@@ -52,12 +52,36 @@ function AdScriptInjector({ script }: { script: string }) {
   useEffect(() => {
     if (!script || !ref.current) return;
     const container = ref.current;
-    const scriptEl = document.createElement("script");
-    scriptEl.async = true;
-    scriptEl.innerHTML = script.replace(/<script[^>]*>|<\/script>/gi, "").trim();
-    container.appendChild(scriptEl);
+    const injected: HTMLScriptElement[] = [];
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(script, "text/html");
+    const templates = doc.querySelectorAll("script");
+
+    if (templates.length > 0) {
+      templates.forEach((tpl) => {
+        const el = document.createElement("script");
+        Array.from(tpl.attributes).forEach((attr) => {
+          el.setAttribute(attr.name, attr.value);
+        });
+        if (tpl.textContent) el.textContent = tpl.textContent;
+        container.appendChild(el);
+        injected.push(el);
+      });
+    } else {
+      const el = document.createElement("script");
+      const inline = script.replace(/<script[^>]*>|<\/script>/gi, "").trim();
+      if (inline) {
+        el.textContent = inline;
+        container.appendChild(el);
+        injected.push(el);
+      }
+    }
+
     return () => {
-      if (container.contains(scriptEl)) container.removeChild(scriptEl);
+      injected.forEach((el) => {
+        if (container.contains(el)) container.removeChild(el);
+      });
     };
   }, [script]);
 
