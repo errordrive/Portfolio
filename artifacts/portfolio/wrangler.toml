@@ -7,7 +7,6 @@ binding = "PORTFOLIO_KV"
 id = "YOUR_KV_NAMESPACE_ID"
 preview_id = "YOUR_KV_NAMESPACE_PREVIEW_ID"
 
-# Do NOT add JWT_SECRET here.
-# Set it as an encrypted environment variable in the Cloudflare Pages dashboard:
-# Settings → Environment variables → Add variable → JWT_SECRET
-# Generate a strong value with: openssl rand -base64 32
+# Set your admin password as an encrypted environment variable in the Cloudflare Pages dashboard:
+# Settings → Environment variables → Add variable → ADMIN_PASSWORD
+# Use any strong password you want — this is both your login password and the JWT signing key.
