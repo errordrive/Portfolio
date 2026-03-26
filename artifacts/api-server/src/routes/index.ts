@@ -5,6 +5,7 @@ import blogRouter from "./blog.js";
 import commentsRouter from "./comments.js";
 import contactRouter from "./contact.js";
 import settingsRouter from "./settings.js";
+import sitemapRouter from "./sitemap.js";
 import adminRouter from "./admin/index.js";
 
 const router: IRouter = Router();
@@ -15,6 +16,7 @@ router.use(blogRouter);
 router.use(commentsRouter);
 router.use(contactRouter);
 router.use(settingsRouter);
+router.use(sitemapRouter);
 router.use("/admin", adminRouter);
 
 export default router;

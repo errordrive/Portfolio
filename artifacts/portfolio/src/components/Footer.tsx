@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { Code2, Heart } from "lucide-react";
 
 export default function Footer() {
@@ -20,6 +20,29 @@ export default function Footer() {
           <div className="text-sm text-muted-foreground">
             <span className="text-primary">AI Expert</span> · <span className="text-violet-400">RE Specialist</span> · <span className="text-emerald-400">Vibe Coder</span>
           </div>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-border/20 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+          <Link
+            to="/privacy-policy"
+            className="text-xs text-muted-foreground/70 hover:text-primary transition-colors"
+          >
+            Privacy Policy
+          </Link>
+          <span className="text-border/50 text-xs">·</span>
+          <Link
+            to="/terms"
+            className="text-xs text-muted-foreground/70 hover:text-primary transition-colors"
+          >
+            Terms &amp; Conditions
+          </Link>
+          <span className="text-border/50 text-xs">·</span>
+          <a
+            href="#contact"
+            className="text-xs text-muted-foreground/70 hover:text-primary transition-colors"
+          >
+            Contact
+          </a>
         </div>
       </div>
     </footer>

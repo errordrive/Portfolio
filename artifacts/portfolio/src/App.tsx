@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HelmetProvider } from "react-helmet-async";
+import { Helmet, HelmetProvider } from "react-helmet-async";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import About from "./components/About";
@@ -12,6 +12,8 @@ import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import BlogList from "./pages/BlogList";
 import BlogDetail from "./pages/BlogDetail";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
 
 const AdminApp = lazy(() => import("./pages/admin/AdminApp"));
 
@@ -42,6 +44,15 @@ function BlogDetailPage() {
 function Portfolio({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => void }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Helmet>
+        <title>Nayem — Vibe Coder</title>
+        <meta name="description" content="Self-taught builder who uses AI smartly to ship things fast. Vibe Coder, AI user, Android RE explorer." />
+        <meta property="og:title" content="Nayem — Vibe Coder" />
+        <meta property="og:description" content="Self-taught builder who uses AI smartly to ship things fast. Vibe Coder, AI user, Android RE explorer." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://nayem.me" />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
       <Navbar theme={theme} toggleTheme={toggleTheme} />
       <main>
         <Hero />
@@ -87,6 +98,8 @@ export default function App() {
           />
           <Route path="/blog/:slug" element={<BlogDetailPage />} />
           <Route path="/blog" element={<BlogListPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<Portfolio theme={theme} toggleTheme={toggleTheme} />} />
         </Routes>
       </QueryClientProvider>
