@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { api, setToken } from "@/lib/api";
 import { Lock, Eye, EyeOff, CheckCircle } from "lucide-react";
 
 export default function ChangePassword() {
@@ -16,8 +16,9 @@ export default function ChangePassword() {
   const mutation = useMutation({
     mutationFn: ({ current, newPw }: { current: string; newPw: string }) =>
       api.admin.password.change(current, newPw),
-    onSuccess: () => {
-      showToast("success", "Password changed successfully");
+    onSuccess: (data) => {
+      if (data.token) setToken(data.token);
+      showToast("success", data.message || "Password changed successfully");
       setForm({ current: "", newPw: "", confirm: "" });
     },
     onError: (e: unknown) => showToast("error", e instanceof Error ? e.message : "Failed to change password"),

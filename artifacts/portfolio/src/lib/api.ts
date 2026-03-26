@@ -160,7 +160,7 @@ export const api = {
 
     password: {
       change: (currentPassword: string, newPassword: string) =>
-        request("/admin/password", {
+        request<{ success: boolean; token: string; message: string }>("/admin/password", {
           method: "PUT",
           body: JSON.stringify({ currentPassword, newPassword }),
         }),

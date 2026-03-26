@@ -859,7 +859,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
       await env.PORTFOLIO_KV.put("admin_password_hash", hash);
       const newSecret = await getJwtSecret(env.PORTFOLIO_KV, env);
       const token = await signJwt({ sub: "admin" }, newSecret);
-      return json({ success: true, token });
+      return json({ success: true, token, message: "Password updated" });
     }
 
     return err("Admin route not found", 404);
