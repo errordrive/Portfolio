@@ -1,12 +1,33 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, Code2 } from "lucide-react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const LAST_UPDATED = "March 26, 2025";
-const SITE_NAME = "Nayem — nayem.me";
 const CONTACT_EMAIL = "nayem@nayem.me";
 
+type Theme = "dark" | "light";
+
+function getInitialTheme(): Theme {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("theme") as Theme | null;
+    if (saved) return saved;
+  }
+  return "dark";
+}
+
 export default function PrivacyPolicy() {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
@@ -14,23 +35,17 @@ export default function PrivacyPolicy() {
         <meta name="description" content="Privacy Policy for nayem.me — how we collect, use, and protect your information." />
       </Helmet>
 
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
+
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5 pointer-events-none" />
 
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-20">
-        <div className="flex items-center justify-between mb-10 pt-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Home
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Code2 className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="font-bold text-primary">nayem.me</span>
-          </div>
-        </div>
+      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-20">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
+        >
+          ← Back to Home
+        </Link>
 
         <div className="glass border border-border/40 rounded-2xl p-6 sm:p-10">
           <div className="mb-8">
@@ -43,16 +58,14 @@ export default function PrivacyPolicy() {
           <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-headings:font-black prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-primary prose-li:text-muted-foreground">
 
             <p>
-              Welcome to {SITE_NAME}. This Privacy Policy explains how we collect, use, and protect
+              Welcome to nayem.me. This Privacy Policy explains how we collect, use, and protect
               your personal information when you visit our website. By using this site, you agree to
               the terms described here.
             </p>
 
             <h2>1. Information We Collect</h2>
             <h3>Information You Provide</h3>
-            <p>
-              When you submit a comment or use the contact form, we collect:
-            </p>
+            <p>When you submit a comment or use the contact form, we collect:</p>
             <ul>
               <li>Your name (as you provide it)</li>
               <li>Your email address</li>
@@ -64,9 +77,7 @@ export default function PrivacyPolicy() {
             </p>
 
             <h3>Information Collected Automatically</h3>
-            <p>
-              When you visit our site, standard web server logs may record:
-            </p>
+            <p>When you visit our site, standard web server logs may record:</p>
             <ul>
               <li>Your IP address</li>
               <li>Browser type and version</li>
@@ -75,9 +86,7 @@ export default function PrivacyPolicy() {
             </ul>
 
             <h2>2. Cookies</h2>
-            <p>
-              This website uses cookies and similar technologies to:
-            </p>
+            <p>This website uses cookies and similar technologies to:</p>
             <ul>
               <li>Remember your theme preference (dark/light mode)</li>
               <li>Enable analytics to understand how visitors use the site</li>
@@ -88,7 +97,7 @@ export default function PrivacyPolicy() {
               features may not work correctly without them.
             </p>
 
-            <h2>3. Google AdSense & Advertising</h2>
+            <h2>3. Google AdSense &amp; Advertising</h2>
             <p>
               This site uses <strong>Google AdSense</strong> to display advertisements. Google and
               its partners may use cookies to show ads based on your interests and prior visits to
@@ -178,12 +187,14 @@ export default function PrivacyPolicy() {
           <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
             ← Return to nayem.me
           </Link>
-          <span className="mx-3 text-border">·</span>
+          <span className="mx-3 text-muted-foreground/30">·</span>
           <Link to="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            Terms & Conditions
+            Terms &amp; Conditions
           </Link>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }

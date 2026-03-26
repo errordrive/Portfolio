@@ -1,37 +1,52 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, Code2 } from "lucide-react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const LAST_UPDATED = "March 26, 2025";
-const SITE_NAME = "Nayem — nayem.me";
 const SITE_URL = "https://nayem.me";
 const CONTACT_EMAIL = "nayem@nayem.me";
 
+type Theme = "dark" | "light";
+
+function getInitialTheme(): Theme {
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("theme") as Theme | null;
+    if (saved) return saved;
+  }
+  return "dark";
+}
+
 export default function Terms() {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
-        <title>Terms & Conditions | Nayem</title>
+        <title>Terms &amp; Conditions | Nayem</title>
         <meta name="description" content="Terms and Conditions for using nayem.me — intellectual property, disclaimers, and user conduct." />
       </Helmet>
 
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
+
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5 pointer-events-none" />
 
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-20">
-        <div className="flex items-center justify-between mb-10 pt-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Home
-          </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-              <Code2 className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="font-bold text-primary">nayem.me</span>
-          </div>
-        </div>
+      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-28 pb-20">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
+        >
+          ← Back to Home
+        </Link>
 
         <div className="glass border border-border/40 rounded-2xl p-6 sm:p-10">
           <div className="mb-8">
@@ -44,7 +59,7 @@ export default function Terms() {
           <div className="prose prose-invert prose-sm sm:prose-base max-w-none prose-headings:font-black prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-primary prose-li:text-muted-foreground">
 
             <p>
-              Please read these Terms &amp; Conditions carefully before using {SITE_NAME} (
+              Please read these Terms &amp; Conditions carefully before using nayem.me (
               <a href={SITE_URL} target="_blank" rel="noopener noreferrer">{SITE_URL}</a>).
               By accessing or using this website, you agree to be bound by these terms.
               If you do not agree with any part of these terms, please do not use the site.
@@ -126,17 +141,13 @@ export default function Terms() {
               intended solely for <strong>educational and research purposes</strong>. Such content
               is meant to help readers understand how software works and improve security awareness.
             </p>
-            <p>
-              You must not use any techniques, tools, or information from this site to:
-            </p>
+            <p>You must not use any techniques, tools, or information from this site to:</p>
             <ul>
               <li>Access systems or applications without authorization</li>
               <li>Bypass security measures you do not have permission to test</li>
               <li>Violate any applicable laws or the terms of service of any platform or application</li>
             </ul>
-            <p>
-              The author accepts no responsibility for any misuse of this information.
-            </p>
+            <p>The author accepts no responsibility for any misuse of this information.</p>
 
             <h2>7. Third-Party Links and Advertisements</h2>
             <p>
@@ -174,12 +185,14 @@ export default function Terms() {
           <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
             ← Return to nayem.me
           </Link>
-          <span className="mx-3 text-border">·</span>
+          <span className="mx-3 text-muted-foreground/30">·</span>
           <Link to="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
             Privacy Policy
           </Link>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 }
