@@ -6,6 +6,7 @@ import {
   jsonb,
   serial,
   integer,
+  unique,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 
@@ -81,7 +82,9 @@ export const commentReactions = pgTable("comment_reactions", {
   commentId: integer("comment_id").notNull().references(() => blogComments.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   count: integer("count").notNull().default(0),
-});
+}, (t) => ({
+  uniqueCommentType: unique().on(t.commentId, t.type),
+}));
 
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
