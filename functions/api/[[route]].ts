@@ -334,19 +334,36 @@ async function handle(request: Request, env: Env): Promise<Response> {
   const commentsGetMatch = path.match(/^\/api\/blog\/([^/]+)\/comments$/);
   if (method === "GET" && commentsGetMatch) {
     const slug = commentsGetMatch[1];
-    const list =
-      (await kvGetCommentList(env.PORTFOLIO_KV, slug)) ?? [];
-    const rawComments = (
-      await Promise.all(
-        list.map((id) => kvGet<Comment & { email?: string; reactions?: Record<string, number> }>(env.PORTFOLIO_KV, `comment:${id}`))
-      )
-    ).filter((c): c is Comment & { email?: string; reactions?: Record<string, number> } => c !== null && c.approved);
-    const safeComments = rawComments.map(({ email: _email, ...rest }) => ({
+    const kv = env.PORTFOLIO_KV;
+    const list = (await kvGetCommentList(kv, slug)) ?? [];
+    type StoredComment = Comment & { postSlug?: string; email?: string; reactions?: Record<string, number> };
+    const allApproved = (
+      await Promise.all(list.map((id) => kvGet<StoredComment>(kv, `comment:${id}`)))
+    ).filter((c): c is StoredComment => c !== null && c.approved);
+    // Look up blog index to resolve postId from slug
+    const blogIndex = (await kvGet<BlogSummary[]>(kv, "blog:index")) ?? [];
+    const slugToId: Record<string, number> = {};
+    blogIndex.forEach((p) => { slugToId[p.slug] = p.id; });
+    // Build public-safe shape (no email, with reactions + postId)
+    type PublicComment = Omit<Comment, "email"> & { replies: PublicComment[] };
+    const shaped: PublicComment[] = allApproved.map(({ email: _e, postSlug, reactions, ...rest }) => ({
       ...rest,
-      reactions: rest.reactions ?? { useful: 0, not_useful: 0 },
-      replies: [] as Comment[],
+      postId: rest.postId ?? (postSlug ? (slugToId[postSlug] ?? 0) : 0),
+      reactions: reactions ?? { useful: 0, not_useful: 0 },
+      replies: [] as PublicComment[],
     }));
-    return json(safeComments);
+    // Build reply tree: nest children under parent
+    const topLevel: PublicComment[] = [];
+    const byId: Record<number, PublicComment> = {};
+    shaped.forEach((c) => { byId[c.id] = c; });
+    shaped.forEach((c) => {
+      if (c.parentId && byId[c.parentId]) {
+        byId[c.parentId].replies.push(c);
+      } else {
+        topLevel.push(c);
+      }
+    });
+    return json(topLevel);
   }
 
   // ── Public: POST /api/blog/:slug/comments ────────────────────────────────
@@ -444,8 +461,9 @@ async function handle(request: Request, env: Env): Promise<Response> {
     return json({ count: reactions[body.type ?? "useful"] ?? 0 });
   }
 
-  // ── Public: GET /sitemap.xml ─────────────────────────────────────────────
-  if (method === "GET" && (path === "/sitemap.xml" || path === "/api/sitemap")) {
+  // ── Public: GET /api/sitemap ─────────────────────────────────────────────
+  // Note: /sitemap.xml is served as a static file; /api/sitemap is the dynamic version.
+  if (method === "GET" && path === "/api/sitemap") {
     const kv = env.PORTFOLIO_KV;
     const index = (await kvGet<BlogSummary[]>(kv, "blog:index")) ?? [];
     const published = index.filter((p) => p.published);
@@ -722,15 +740,27 @@ async function handle(request: Request, env: Env): Promise<Response> {
     if (method === "GET" && adminPath === "/comments") {
       const kv = env.PORTFOLIO_KV;
       const keys = await kv.list({ prefix: "comment:" });
+      type StoredComment = Comment & { postSlug?: string; email?: string; reactions?: Record<string, number> };
       const comments = (
-        await Promise.all(keys.keys.map((k) => kvGet<Comment>(kv, k.name)))
-      ).filter((c): c is Comment => c !== null);
-      return json(
-        comments.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
-      );
+        await Promise.all(keys.keys.map((k) => kvGet<StoredComment>(kv, k.name)))
+      ).filter((c): c is StoredComment => c !== null);
+      // Enrich with postTitle and postSlug from blog index
+      const blogIdx = (await kvGet<BlogSummary[]>(kv, "blog:index")) ?? [];
+      const idToPost: Record<number, BlogSummary> = {};
+      const slugToPost: Record<string, BlogSummary> = {};
+      blogIdx.forEach((p) => { idToPost[p.id] = p; slugToPost[p.slug] = p; });
+      const enriched = comments
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .map((c) => {
+          const post = (c.postId ? idToPost[c.postId] : undefined) ?? (c.postSlug ? slugToPost[c.postSlug] : undefined);
+          return {
+            ...c,
+            postId: c.postId ?? post?.id ?? 0,
+            postTitle: post?.title ?? null,
+            postSlug: c.postSlug ?? post?.slug ?? null,
+          };
+        });
+      return json(enriched);
     }
 
     // PATCH /api/admin/comments/:id
