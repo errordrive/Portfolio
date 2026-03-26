@@ -137,6 +137,22 @@ async function kvPut(kv: KVNamespace, key: string, value: unknown): Promise<void
   await kv.put(key, JSON.stringify(value));
 }
 
+// ── Backward-compatible KV helpers (support legacy key formats) ───────────────
+
+async function kvGetBlogPost(kv: KVNamespace, slug: string): Promise<unknown | null> {
+  return (
+    (await kvGet<unknown>(kv, `blog:${slug}`)) ??
+    (await kvGet<unknown>(kv, `blog:post:${slug}`))
+  );
+}
+
+async function kvGetCommentList(kv: KVNamespace, slug: string): Promise<number[] | null> {
+  return (
+    (await kvGet<number[]>(kv, `comments:${slug}`)) ??
+    (await kvGet<number[]>(kv, `comments:${slug}:list`))
+  );
+}
+
 // ── Type helpers ──────────────────────────────────────────────────────────────
 
 interface BlogSummary {
@@ -309,10 +325,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   // ── Public: GET /api/blog/:slug ───────────────────────────────────────────
   const blogSlugMatch = path.match(/^\/api\/blog\/([^/]+)$/);
   if (method === "GET" && blogSlugMatch) {
-    const data = await kvGet<BlogPost>(
-      env.PORTFOLIO_KV,
-      `blog:${blogSlugMatch[1]}`
-    );
+    const data = await kvGetBlogPost(env.PORTFOLIO_KV, blogSlugMatch[1]) as BlogPost | null;
     if (!data || !data.published) return err("Post not found", 404);
     return json(data);
   }
@@ -322,7 +335,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
   if (method === "GET" && commentsGetMatch) {
     const slug = commentsGetMatch[1];
     const list =
-      (await kvGet<number[]>(env.PORTFOLIO_KV, `comments:${slug}`)) ?? [];
+      (await kvGetCommentList(env.PORTFOLIO_KV, slug)) ?? [];
     const rawComments = (
       await Promise.all(
         list.map((id) => kvGet<Comment & { email?: string; reactions?: Record<string, number> }>(env.PORTFOLIO_KV, `comment:${id}`))
@@ -367,7 +380,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
       approved: false,
       createdAt: new Date().toISOString(),
     };
-    const list = (await kvGet<number[]>(kv, `comments:${slug}`)) ?? [];
+    const list = (await kvGetCommentList(kv, slug)) ?? [];
     await Promise.all([
       kvPut(kv, `comment:${id}`, comment),
       kvPut(kv, `comments:${slug}`, [...list, id]),
@@ -623,7 +636,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
       const index = (await kvGet<BlogSummary[]>(kv, "blog:index")) ?? [];
       const existing = index.find((p) => p.id === id);
       if (!existing) return err("Post not found", 404);
-      const full = await kvGet<BlogPost>(kv, `blog:${existing.slug}`);
+      const full = await kvGetBlogPost(kv, existing.slug) as BlogPost | null;
       if (!full) return err("Post not found", 404);
       const updated: BlogPost = { ...full, ...body, id, updatedAt: new Date().toISOString() };
       const newIndex = index.map((p) =>
