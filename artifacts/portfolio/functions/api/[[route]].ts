@@ -66,28 +66,12 @@ function getSecret(env: Bindings): string | null {
   return s;
 }
 
-async function requireAuth(c: { req: { header: (k: string) => string | undefined }; env: Bindings }, next: () => Promise<void>) {
-  const secret = getSecret(c.env);
-  if (!secret) return err("Server misconfiguration: JWT_SECRET not set", 500);
-  const auth = c.req.header("Authorization");
-  if (!auth?.startsWith("Bearer ")) return err("Unauthorized", 401);
-  const token = auth.slice(7);
-  const payload = await verifyToken(token, secret);
-  if (!payload) return err("Unauthorized", 401);
-  return next();
-}
-
 function kvGet<T>(kv: KVNamespace, key: string): Promise<T | null> {
   return kv.get(key, "json") as Promise<T | null>;
 }
 
 async function kvPut(kv: KVNamespace, key: string, value: unknown): Promise<void> {
   await kv.put(key, JSON.stringify(value));
-}
-
-function toISOStr(d?: Date | string): string {
-  if (!d) return new Date().toISOString();
-  return new Date(d).toISOString();
 }
 
 function nextId(current: string | null): number {
@@ -360,9 +344,28 @@ adminApp.put("/content/:section", async (c) => {
   return c.json(updated);
 });
 
+function toSummary(post: BlogPost): BlogSummary {
+  return {
+    id: post.id, slug: post.slug, title: post.title, excerpt: post.excerpt,
+    featuredImage: post.featuredImage, tags: post.tags, published: post.published,
+    createdAt: post.createdAt, updatedAt: post.updatedAt,
+  };
+}
+
 adminApp.get("/blog", async (c) => {
-  const index = await kvGet<BlogPost[]>(c.env.PORTFOLIO_KV, "blog:index") ?? [];
+  const index = await kvGet<BlogSummary[]>(c.env.PORTFOLIO_KV, "blog:index") ?? [];
   return c.json(index.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+});
+
+adminApp.get("/blog/:id", async (c) => {
+  const id = parseInt(c.req.param("id"), 10);
+  if (isNaN(id)) return err("Invalid id");
+  const kv = c.env.PORTFOLIO_KV;
+  const slug = await kv.get(`blog:id:${id}`);
+  if (!slug) return err("Post not found", 404);
+  const post = await kvGet<BlogPost>(kv, `blog:post:${slug}`);
+  if (!post) return err("Post not found", 404);
+  return c.json(post);
 });
 
 adminApp.post("/blog", async (c) => {
@@ -385,12 +388,12 @@ adminApp.post("/blog", async (c) => {
     adScript: body.adScript ?? "",
     createdAt: now, updatedAt: now,
   };
-  const index = await kvGet<BlogPost[]>(kv, "blog:index") ?? [];
+  const index = await kvGet<BlogSummary[]>(kv, "blog:index") ?? [];
   await Promise.all([
     kvPut(kv, `blog:post:${post.slug}`, post),
     kv.put(`blog:id:${id}`, post.slug),
     kv.put("blog:counter", String(id)),
-    kvPut(kv, "blog:index", [...index, post]),
+    kvPut(kv, "blog:index", [...index, toSummary(post)]),
   ]);
   return c.json(post, 201);
 });
@@ -426,23 +429,22 @@ adminApp.put("/blog/:id", async (c) => {
     ...(body.adScript !== undefined && { adScript: body.adScript }),
     updatedAt: new Date().toISOString(),
   };
-  const index = await kvGet<BlogPost[]>(kv, "blog:index") ?? [];
-  const newIndex = index.map((p) => (p.id === id ? updated : p));
-  const ops: Promise<void>[] = [kvPut(kv, "blog:index", newIndex), kvPut(kv, `blog:post:${updated.slug}`, updated)];
+  const index = await kvGet<BlogSummary[]>(kv, "blog:index") ?? [];
+  const newIndex = index.map((p) => (p.id === id ? toSummary(updated) : p));
+  const ops: Array<Promise<unknown>> = [kvPut(kv, "blog:index", newIndex), kvPut(kv, `blog:post:${updated.slug}`, updated)];
   if (body.slug && body.slug !== existing.slug) {
     const oldSlug = existing.slug;
     const newSlug = updated.slug;
-    ops.push(kv.put(`blog:id:${id}`, newSlug) as unknown as Promise<void>);
-    ops.push(kv.delete(`blog:post:${oldSlug}`) as unknown as Promise<void>);
+    ops.push(kv.put(`blog:id:${id}`, newSlug));
+    ops.push(kv.delete(`blog:post:${oldSlug}`));
     const commentIds = await kvGet<number[]>(kv, `comments:${oldSlug}:list`) ?? [];
     if (commentIds.length > 0) {
-      ops.push(kvPut(kv, `comments:${newSlug}:list`, commentIds) as Promise<void>);
-      ops.push(kv.delete(`comments:${oldSlug}:list`) as unknown as Promise<void>);
-      const commentUpdates = commentIds.map(async (cid) => {
+      ops.push(kvPut(kv, `comments:${newSlug}:list`, commentIds));
+      ops.push(kv.delete(`comments:${oldSlug}:list`));
+      ops.push(Promise.all(commentIds.map(async (cid) => {
         const comment = await kvGet<Comment>(kv, `comment:${cid}`);
         if (comment) await kvPut(kv, `comment:${cid}`, { ...comment, postSlug: newSlug });
-      });
-      ops.push(Promise.all(commentUpdates).then(() => undefined));
+      })));
     }
   }
   await Promise.all(ops);
@@ -455,7 +457,7 @@ adminApp.delete("/blog/:id", async (c) => {
   const kv = c.env.PORTFOLIO_KV;
   const slug = await kv.get(`blog:id:${id}`);
   if (!slug) return err("Post not found", 404);
-  const index = await kvGet<BlogPost[]>(kv, "blog:index") ?? [];
+  const index = await kvGet<BlogSummary[]>(kv, "blog:index") ?? [];
   await Promise.all([
     kv.delete(`blog:post:${slug}`),
     kv.delete(`blog:id:${id}`),
@@ -466,7 +468,7 @@ adminApp.delete("/blog/:id", async (c) => {
 
 adminApp.get("/comments", async (c) => {
   const kv = c.env.PORTFOLIO_KV;
-  const index = await kvGet<BlogPost[]>(kv, "blog:index") ?? [];
+  const index = await kvGet<BlogSummary[]>(kv, "blog:index") ?? [];
   const allComments: (Comment & { postTitle: string | null; postSlug: string | null })[] = [];
   await Promise.all(
     index.map(async (post) => {
