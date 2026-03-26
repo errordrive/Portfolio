@@ -64,10 +64,10 @@ export const cvFile = pgTable("cv_file", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const blogComments = pgTable("blog_comments", {
+export const blogComments: ReturnType<typeof pgTable> = pgTable("blog_comments", {
   id: serial("id").primaryKey(),
   postId: integer("post_id").notNull().references(() => blogPosts.id, { onDelete: "cascade" }),
-  parentId: integer("parent_id"),
+  parentId: integer("parent_id").references((): any => blogComments.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   email: text("email").notNull(),
   content: text("content").notNull(),

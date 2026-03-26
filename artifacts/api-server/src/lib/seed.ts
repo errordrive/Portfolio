@@ -231,6 +231,25 @@ export async function runMigrations() {
       url TEXT NOT NULL DEFAULT '',
       updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS blog_comments (
+      id SERIAL PRIMARY KEY,
+      post_id INTEGER NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+      parent_id INTEGER REFERENCES blog_comments(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      content TEXT NOT NULL,
+      approved BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS comment_reactions (
+      id SERIAL PRIMARY KEY,
+      comment_id INTEGER NOT NULL REFERENCES blog_comments(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      count INTEGER NOT NULL DEFAULT 0,
+      UNIQUE(comment_id, type)
+    );
   `);
 }
 

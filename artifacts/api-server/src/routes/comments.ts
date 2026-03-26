@@ -95,11 +95,39 @@ router.post("/blog/:slug/comments", async (req: Request, res: Response) => {
 
     const postId = posts[0].id;
 
+    let resolvedParentId: number | null = null;
+    if (parentId !== undefined && parentId !== null && parentId !== "") {
+      const pid = parseInt(String(parentId), 10);
+      if (isNaN(pid) || pid <= 0) {
+        res.status(400).json({ error: "Invalid parentId" });
+        return;
+      }
+      const parentRows = await db
+        .select({ id: blogComments.id, postId: blogComments.postId, parentId: blogComments.parentId })
+        .from(blogComments)
+        .where(eq(blogComments.id, pid))
+        .limit(1);
+      if (!parentRows.length) {
+        res.status(404).json({ error: "Parent comment not found" });
+        return;
+      }
+      const parent = parentRows[0];
+      if (parent.postId !== postId) {
+        res.status(400).json({ error: "Parent comment does not belong to this post" });
+        return;
+      }
+      if (parent.parentId !== null) {
+        res.status(400).json({ error: "Replies to replies are not allowed (max depth: 1)" });
+        return;
+      }
+      resolvedParentId = pid;
+    }
+
     const [comment] = await db
       .insert(blogComments)
       .values({
         postId,
-        parentId: parentId ? parseInt(parentId, 10) : null,
+        parentId: resolvedParentId,
         name: name.trim(),
         email: email.trim().toLowerCase(),
         content: content.trim(),
