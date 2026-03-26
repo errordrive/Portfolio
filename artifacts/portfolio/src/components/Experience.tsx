@@ -33,10 +33,10 @@ export default function Experience({ data: dataProp, visible: visibleProp }: Exp
   const timeline = d.timeline?.length ? d.timeline : DEFAULT_TIMELINE;
 
   return (
-    <section id="experience" className="relative py-24 lg:py-32">
+    <section id="experience" className="relative py-10 md:py-16">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/3 to-transparent" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-6xl mx-auto px-4 md:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -45,7 +45,7 @@ export default function Experience({ data: dataProp, visible: visibleProp }: Exp
           className="text-center mb-14"
         >
           <span className="text-primary text-sm font-semibold tracking-widest uppercase">Journey</span>
-          <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
+          <h2 className="mt-3 text-xl md:text-2xl lg:text-3xl font-black">
             How I got <span className="gradient-text">here</span>
           </h2>
           <p className="mt-4 text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">

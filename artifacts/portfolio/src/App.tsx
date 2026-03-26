@@ -14,6 +14,7 @@ import BlogList from "./pages/BlogList";
 import BlogDetail from "./pages/BlogDetail";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import AboutPage from "./pages/About";
 
 const AdminApp = lazy(() => import("./pages/admin/AdminApp"));
 
@@ -45,10 +46,10 @@ function Portfolio({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => vo
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Helmet>
-        <title>Nayem — Vibe Coder</title>
-        <meta name="description" content="Self-taught builder who uses AI smartly to ship things fast. Vibe Coder, AI user, Android RE explorer." />
-        <meta property="og:title" content="Nayem — Vibe Coder" />
-        <meta property="og:description" content="Self-taught builder who uses AI smartly to ship things fast. Vibe Coder, AI user, Android RE explorer." />
+        <title>Nayem Hossain – Vibe Coder, AI User &amp; Android RE Explorer</title>
+        <meta name="description" content="Nayem Hossain is an AI expert, Vibe Coder, and Android Reverse Engineering Explorer from Bangladesh. Explore portfolio, projects, and blog." />
+        <meta property="og:title" content="Nayem Hossain – Vibe Coder, AI User &amp; Android RE Explorer" />
+        <meta property="og:description" content="Nayem Hossain is an AI expert, Vibe Coder, and Android Reverse Engineering Explorer from Bangladesh." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://nayem.me" />
         <meta name="twitter:card" content="summary_large_image" />
@@ -96,6 +97,7 @@ export default function App() {
               </Suspense>
             }
           />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/blog/:slug" element={<BlogDetailPage />} />
           <Route path="/blog" element={<BlogListPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />

@@ -65,20 +65,20 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
       className="relative min-h-screen flex items-center overflow-hidden"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5 pointer-events-none" />
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/6 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-violet-500/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[280px] h-[280px] bg-violet-500/4 rounded-full blur-[80px] pointer-events-none" />
 
       {/* Image — absolutely anchored to top-right corner, desktop only */}
       <motion.div
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-        className="hidden sm:block absolute top-16 right-4 sm:right-8 lg:right-14"
+        className="hidden sm:block absolute top-16 right-4 sm:right-6 lg:right-10"
       >
         <div className="relative">
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/30 to-violet-500/15 blur-xl" />
 
-          <div className="relative w-40 sm:w-52 lg:w-72 aspect-[3/4] rounded-2xl overflow-hidden glass border border-primary/20 shadow-2xl">
+          <div className="relative w-36 sm:w-44 lg:w-56 aspect-[3/4] rounded-2xl overflow-hidden glass border border-primary/20 shadow-2xl">
             <img
               src="/photo1.png"
               alt={`${d.name} — Vibe Coder`}
@@ -103,7 +103,7 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
       </motion.div>
 
       {/* Text content — left side */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 w-full">
+      <div className="relative max-w-6xl mx-auto px-4 md:px-6 pt-20 pb-12 w-full">
         <motion.div
           variants={container}
           initial="hidden"
@@ -117,7 +117,7 @@ export default function Hero({ data: dataProp, visible: visibleProp }: HeroProps
             </span>
           </motion.div>
 
-          <motion.h1 variants={item} className="text-3xl sm:text-4xl lg:text-6xl font-black leading-[1.05] tracking-tight mb-4">
+          <motion.h1 variants={item} className="text-3xl md:text-4xl lg:text-5xl font-black leading-[1.05] tracking-tight mb-4">
             <span className="text-foreground">Hi, I'm </span>
             <span className="gradient-text neon-text-glow">{d.name}</span>
           </motion.h1>

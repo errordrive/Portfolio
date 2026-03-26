@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { handle } from "hono/cloudflare-pages";
 import * as jose from "jose";
 import bcrypt from "bcryptjs";
@@ -11,6 +12,16 @@ export interface Env {
 type Bindings = Env;
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.use(
+  "/api/*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    maxAge: 86400,
+  })
+);
 
 const PUBLIC_SETTING_KEYS = [
   "site_title",

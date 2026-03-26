@@ -45,11 +45,11 @@ export default function About({ data: dataProp, visible: visibleProp }: AboutPro
   const bio = d.bio?.length ? d.bio : DEFAULT_ABOUT.bio;
 
   return (
-    <section id="about" className="relative py-24 lg:py-32 overflow-hidden">
+    <section id="about" className="relative py-10 md:py-16 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/3 to-transparent" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+      <div className="relative max-w-6xl mx-auto px-4 md:px-6">
+        <div className="grid lg:grid-cols-2 gap-10 items-center">
 
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -86,7 +86,7 @@ export default function About({ data: dataProp, visible: visibleProp }: AboutPro
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <span className="text-primary text-sm font-semibold tracking-widest uppercase">About Me</span>
-            <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black leading-tight mb-6">
+            <h2 className="mt-3 text-xl md:text-2xl lg:text-3xl font-black leading-tight mb-6">
               <span className="gradient-text">{d.heading || DEFAULT_ABOUT.heading}</span>
             </h2>
 

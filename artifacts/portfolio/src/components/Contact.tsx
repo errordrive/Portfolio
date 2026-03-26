@@ -80,11 +80,11 @@ export default function Contact({ data: dataProp, visible: visibleProp }: Contac
   };
 
   return (
-    <section id="contact" className="relative py-24 lg:py-32">
+    <section id="contact" className="relative py-10 md:py-16">
       <div className="absolute inset-0 grid-bg opacity-15" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/8 rounded-full blur-3xl" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-72 bg-primary/8 rounded-full blur-3xl" />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-6xl mx-auto px-4 md:px-6">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -93,7 +93,7 @@ export default function Contact({ data: dataProp, visible: visibleProp }: Contac
           className="text-center mb-16"
         >
           <span className="text-primary text-sm font-semibold tracking-widest uppercase">Contact</span>
-          <h2 className="mt-3 text-2xl sm:text-3xl lg:text-5xl font-black">
+          <h2 className="mt-3 text-xl md:text-2xl lg:text-3xl font-black">
             Let's <span className="gradient-text">Connect</span>
           </h2>
           <p className="mt-4 text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
