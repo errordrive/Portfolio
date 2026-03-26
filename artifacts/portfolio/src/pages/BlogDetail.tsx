@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Calendar, Clock, Tag } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Tag, MessageSquare, ThumbsUp, ThumbsDown, Reply, Send, CheckCircle } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { api } from "../lib/api";
-import type { BlogPost } from "../lib/api";
+import type { BlogPost, Comment } from "../lib/api";
 
 function readingTime(html: string): number {
   const text = html.replace(/<[^>]*>/g, "");
@@ -242,8 +242,241 @@ export default function BlogDetail() {
               <ArrowLeft className="w-4 h-4" /> Back to Blog
             </Link>
           </div>
+
+          <CommentSection slug={slug!} />
         </motion.div>
       </div>
+    </div>
+  );
+}
+
+// ─────────────────────────── Comment Section ──────────────────────────────────
+
+function formatRelative(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+interface CommentFormProps {
+  slug: string;
+  parentId?: number;
+  onSuccess: () => void;
+  onCancel?: () => void;
+  compact?: boolean;
+}
+
+function CommentForm({ slug, parentId, onSuccess, onCancel, compact }: CommentFormProps) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [content, setContent] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: () => api.comments.submit(slug, { name, email, content, parentId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["blog-comments", slug] });
+      setSubmitted(true);
+      setName(""); setEmail(""); setContent("");
+      setTimeout(() => { setSubmitted(false); onSuccess(); }, 3000);
+    },
+  });
+
+  if (submitted) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-green-400 glass rounded-xl px-4 py-3 border border-green-500/20">
+        <CheckCircle className="w-4 h-4 shrink-0" />
+        Your comment is awaiting moderation. Thank you!
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={(e) => { e.preventDefault(); if (name && email && content) mutation.mutate(); }}
+      className={`space-y-3 ${compact ? "" : "glass border border-border/40 rounded-2xl p-5"}`}
+    >
+      {!compact && <h3 className="text-sm font-bold text-foreground">Leave a Comment</h3>}
+      <div className={`grid gap-3 ${compact ? "grid-cols-1" : "sm:grid-cols-2"}`}>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Your name *"
+          required
+          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-border/40 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email address *"
+          required
+          className="w-full px-3 py-2 rounded-lg bg-white/5 border border-border/40 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+        />
+      </div>
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Write your comment..."
+        required
+        rows={compact ? 2 : 4}
+        className="w-full px-3 py-2 rounded-lg bg-white/5 border border-border/40 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors resize-none"
+      />
+      {mutation.isError && (
+        <p className="text-xs text-red-400">{(mutation.error as Error).message}</p>
+      )}
+      <div className="flex items-center gap-2">
+        <button
+          type="submit"
+          disabled={mutation.isPending || !name || !email || !content}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white text-xs font-semibold disabled:opacity-50 hover:bg-primary/90 transition-colors"
+        >
+          <Send className="w-3 h-3" />
+          {mutation.isPending ? "Submitting…" : "Submit"}
+        </button>
+        {onCancel && (
+          <button type="button" onClick={onCancel} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Cancel
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
+
+interface CommentCardProps {
+  comment: Comment;
+  slug: string;
+  isReply?: boolean;
+}
+
+function CommentCard({ comment, slug, isReply }: CommentCardProps) {
+  const queryClient = useQueryClient();
+  const [replying, setReplying] = useState(false);
+  const [reactions, setReactions] = useState(comment.reactions);
+
+  const reactMutation = useMutation({
+    mutationFn: (type: "useful" | "not_useful") => api.comments.react(comment.id, type),
+    onSuccess: (data, type) => {
+      setReactions((prev) => ({
+        ...prev,
+        [type]: data.count,
+      }));
+    },
+  });
+
+  return (
+    <div className={`${isReply ? "ml-6 pl-4 border-l border-border/30" : ""}`}>
+      <div className="glass border border-border/30 rounded-xl p-4">
+        <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+              {comment.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-foreground">{comment.name}</div>
+              <div className="text-[10px] text-muted-foreground">{formatRelative(comment.createdAt)}</div>
+            </div>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-3">{comment.content}</p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => reactMutation.mutate("useful")}
+            disabled={reactMutation.isPending}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-green-400 transition-colors"
+          >
+            <ThumbsUp className="w-3.5 h-3.5" />
+            <span>{reactions.useful}</span>
+          </button>
+          <button
+            onClick={() => reactMutation.mutate("not_useful")}
+            disabled={reactMutation.isPending}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-400 transition-colors"
+          >
+            <ThumbsDown className="w-3.5 h-3.5" />
+            <span>{reactions.not_useful}</span>
+          </button>
+          {!isReply && (
+            <button
+              onClick={() => setReplying(!replying)}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors ml-auto"
+            >
+              <Reply className="w-3.5 h-3.5" />
+              Reply
+            </button>
+          )}
+        </div>
+      </div>
+
+      {replying && (
+        <div className="mt-2 ml-6">
+          <CommentForm
+            slug={slug}
+            parentId={comment.id}
+            compact
+            onSuccess={() => setReplying(false)}
+            onCancel={() => setReplying(false)}
+          />
+        </div>
+      )}
+
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="mt-2 space-y-2">
+          {comment.replies.map((reply) => (
+            <CommentCard key={reply.id} comment={reply} slug={slug} isReply />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CommentSection({ slug }: { slug: string }) {
+  const { data: comments = [], isLoading } = useQuery<Comment[]>({
+    queryKey: ["blog-comments", slug],
+    queryFn: () => api.comments.list(slug),
+    staleTime: 30_000,
+  });
+
+  const totalCount = comments.reduce((acc, c) => acc + 1 + (c.replies?.length ?? 0), 0);
+
+  return (
+    <div className="mt-16 pt-10 border-t border-border/30">
+      <div className="flex items-center gap-2 mb-8">
+        <MessageSquare className="w-5 h-5 text-primary" />
+        <h2 className="text-xl font-black text-foreground">
+          {totalCount > 0 ? `${totalCount} Comment${totalCount !== 1 ? "s" : ""}` : "Comments"}
+        </h2>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <div key={i} className="h-20 bg-white/5 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      ) : comments.length === 0 ? (
+        <div className="glass border border-border/30 rounded-xl p-6 text-center mb-8">
+          <MessageSquare className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">No comments yet. Be the first to share your thoughts!</p>
+        </div>
+      ) : (
+        <div className="space-y-4 mb-10">
+          {comments.map((comment) => (
+            <CommentCard key={comment.id} comment={comment} slug={slug} />
+          ))}
+        </div>
+      )}
+
+      <CommentForm slug={slug} onSuccess={() => {}} />
     </div>
   );
 }

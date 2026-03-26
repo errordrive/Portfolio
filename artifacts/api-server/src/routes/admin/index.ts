@@ -6,6 +6,7 @@ import messagesRouter from "./messages.js";
 import settingsRouter from "./settings.js";
 import cvRouter from "./cv.js";
 import passwordRouter from "./password.js";
+import commentsRouter from "./comments.js";
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use("/messages", messagesRouter);
 router.use("/settings", settingsRouter);
 router.use("/cv", cvRouter);
 router.use("/password", passwordRouter);
+router.use("/comments", commentsRouter);
 
 export default router;

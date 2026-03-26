@@ -11,6 +11,7 @@ import BlogEditor from "./BlogEditor";
 import Messages from "./Messages";
 import Settings from "./Settings";
 import ChangePassword from "./ChangePassword";
+import Comments from "./Comments";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -106,6 +107,16 @@ export default function AdminApp() {
             <ProtectedRoute>
               <AdminLayout>
                 <ChangePassword />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="comments"
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <Comments />
               </AdminLayout>
             </ProtectedRoute>
           }

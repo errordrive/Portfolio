@@ -5,6 +5,7 @@ import {
   timestamp,
   jsonb,
   serial,
+  integer,
 } from "drizzle-orm/pg-core";
 
 export const adminUsers = pgTable("admin_users", {
@@ -63,8 +64,28 @@ export const cvFile = pgTable("cv_file", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const blogComments = pgTable("blog_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => blogPosts.id, { onDelete: "cascade" }),
+  parentId: integer("parent_id"),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  content: text("content").notNull(),
+  approved: boolean("approved").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const commentReactions = pgTable("comment_reactions", {
+  id: serial("id").primaryKey(),
+  commentId: integer("comment_id").notNull().references(() => blogComments.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  count: integer("count").notNull().default(0),
+});
+
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type ContentSection = typeof contentSections.$inferSelect;
 export type SiteSetting = typeof siteSettings.$inferSelect;
+export type BlogComment = typeof blogComments.$inferSelect;
+export type CommentReaction = typeof commentReactions.$inferSelect;

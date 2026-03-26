@@ -79,6 +79,20 @@ export const api = {
       }),
   },
 
+  comments: {
+    list: (slug: string) => request<Comment[]>(`/blog/${slug}/comments`),
+    submit: (slug: string, data: { name: string; email: string; content: string; parentId?: number }) =>
+      request<{ success: boolean; id: number; message: string }>(`/blog/${slug}/comments`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    react: (commentId: number, type: "useful" | "not_useful") =>
+      request<{ count: number }>(`/comments/${commentId}/react`, {
+        method: "POST",
+        body: JSON.stringify({ type }),
+      }),
+  },
+
   // Admin
   admin: {
     content: {
@@ -136,8 +150,51 @@ export const api = {
           body: JSON.stringify({ currentPassword, newPassword }),
         }),
     },
+
+    comments: {
+      list: () => request<AdminComment[]>("/admin/comments"),
+      approve: (id: number, approved: boolean) =>
+        request<AdminComment>(`/admin/comments/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ approved }),
+        }),
+      delete: (id: number) =>
+        request(`/admin/comments/${id}`, { method: "DELETE" }),
+    },
   },
 };
+
+// ─────────────────────────────── Comments ─────────────────────────────────────
+
+export interface CommentReactions {
+  useful: number;
+  not_useful: number;
+}
+
+export interface Comment {
+  id: number;
+  postId: number;
+  parentId: number | null;
+  name: string;
+  content: string;
+  approved: boolean;
+  createdAt: string;
+  reactions: CommentReactions;
+  replies?: Comment[];
+}
+
+export interface AdminComment {
+  id: number;
+  postId: number;
+  parentId: number | null;
+  name: string;
+  email: string;
+  content: string;
+  approved: boolean;
+  createdAt: string;
+  postTitle: string | null;
+  postSlug: string | null;
+}
 
 // ─────────────────────────────── Blog ────────────────────────────────────────
 
