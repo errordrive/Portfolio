@@ -2,6 +2,11 @@ import { Router, type Request, type Response } from "express";
 import { db, blogPosts, blogComments, commentReactions } from "@workspace/db";
 import { eq, and, desc, inArray } from "drizzle-orm";
 
+// Design note: Comments and replies are fully anonymous (no auth required).
+// All submissions are held pending moderation (approved=false) until an admin approves them.
+// Max thread depth is 1 level — top-level comments can have replies, but replies cannot have replies.
+// This is enforced both server-side (parentId validation) and by the frontend (no reply button on replies).
+
 const router = Router();
 
 router.get("/blog/:slug/comments", async (req: Request, res: Response) => {
@@ -151,8 +156,19 @@ router.post("/comments/:id/react", async (req: Request, res: Response) => {
     const id = parseInt(req.params.id, 10);
     const { type } = req.body;
 
-    if (isNaN(id) || !["useful", "not_useful"].includes(type)) {
+    if (isNaN(id) || id <= 0 || !["useful", "not_useful"].includes(type)) {
       res.status(400).json({ error: "Invalid request" });
+      return;
+    }
+
+    const commentRows = await db
+      .select({ id: blogComments.id, approved: blogComments.approved })
+      .from(blogComments)
+      .where(and(eq(blogComments.id, id), eq(blogComments.approved, true)))
+      .limit(1);
+
+    if (!commentRows.length) {
+      res.status(404).json({ error: "Comment not found" });
       return;
     }
 
