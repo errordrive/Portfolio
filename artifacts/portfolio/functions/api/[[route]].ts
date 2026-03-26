@@ -111,22 +111,23 @@ interface Message { id: number; name: string; email: string; subject: string; me
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 
+const SETUP_USERNAME = "admin";
+const SETUP_PASSWORD = "admin123";
+const SETUP_PASSWORD_HASH = "$2b$10$WzJT22GzZps/OEcCgE3GqugNaYj6pKQvXzH8t9.zThnZkdVufy.Pm";
+
 app.get("/api/setup", async (c) => {
   const kv = c.env.PORTFOLIO_KV;
   const existing = await kvGet<AdminUser>(kv, "admin:user");
   if (existing) {
     return c.json({ ok: false, message: "Admin already configured. Use your existing credentials to log in." });
   }
-  const username = "admin";
-  const password = "Admin@2025!";
-  const passwordHash = await bcrypt.hash(password, 10);
-  const user: AdminUser = { username, passwordHash, createdAt: new Date().toISOString() };
+  const user: AdminUser = { username: SETUP_USERNAME, passwordHash: SETUP_PASSWORD_HASH, createdAt: new Date().toISOString() };
   await kvPut(kv, "admin:user", user);
   return c.json({
     ok: true,
-    message: "Admin account created successfully! Save these credentials now — this endpoint won't show them again.",
-    username,
-    password,
+    message: "Admin account created successfully! Save these credentials — this endpoint will not show them again.",
+    username: SETUP_USERNAME,
+    password: SETUP_PASSWORD,
   });
 });
 
