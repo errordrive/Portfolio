@@ -133,11 +133,17 @@ app.get("/api/cv", async (c) => {
   return c.json({ url });
 });
 
+async function getContentSections(kv: KVNamespace): Promise<string[]> {
+  const fromKv = await kvGet<string[]>(kv, "content:index");
+  return fromKv ?? CONTENT_SECTIONS;
+}
+
 app.get("/api/content", async (c) => {
   const kv = c.env.PORTFOLIO_KV;
+  const sections = await getContentSections(kv);
   const result: Record<string, ContentSection> = {};
   await Promise.all(
-    CONTENT_SECTIONS.map(async (section) => {
+    sections.map(async (section) => {
       const data = await kvGet<ContentSection>(kv, `content:${section}`);
       if (data) result[section] = data;
     })
@@ -336,8 +342,9 @@ adminApp.post("/cv", async (c) => {
 
 adminApp.get("/content", async (c) => {
   const kv = c.env.PORTFOLIO_KV;
+  const sections = await getContentSections(kv);
   const result: Record<string, ContentSection> = {};
-  await Promise.all(CONTENT_SECTIONS.map(async (section) => {
+  await Promise.all(sections.map(async (section) => {
     const data = await kvGet<ContentSection>(kv, `content:${section}`);
     if (data) result[section] = data;
   }));
