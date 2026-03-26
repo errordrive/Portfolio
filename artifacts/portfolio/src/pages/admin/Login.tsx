@@ -6,26 +6,25 @@ import { Eye, EyeOff, Lock, Shield } from "lucide-react";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
 
   const loginMutation = useMutation({
-    mutationFn: ({ username, password }: { username: string; password: string }) =>
-      api.auth.login(username, password),
+    mutationFn: (pw: string) => api.auth.login(pw),
     onSuccess: (data) => {
       setToken(data.token);
       navigate("/admin/dashboard");
     },
     onError: (err: unknown) => {
-      setError(err instanceof Error ? err.message : "Login failed. Check credentials.");
+      setError(err instanceof Error ? err.message : "Login failed. Check your password.");
     },
   });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    loginMutation.mutate(form);
+    loginMutation.mutate(password);
   }
 
   const isPending = loginMutation.isPending;
@@ -76,24 +75,6 @@ export default function Login() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Username */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-zinc-500">
-                Username
-              </label>
-              <input
-                type="text"
-                autoComplete="username"
-                value={form.username}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, username: e.target.value }))
-                }
-                placeholder="admin"
-                required
-                className="w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 px-4 py-3 text-sm text-white placeholder:text-zinc-600 transition-all focus:border-orange-500/60 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-              />
-            </div>
-
             {/* Password */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-zinc-500">
@@ -103,10 +84,8 @@ export default function Login() {
                 <input
                   type={showPw ? "text" : "password"}
                   autoComplete="current-password"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, password: e.target.value }))
-                  }
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
                   className="w-full rounded-xl border border-zinc-700/80 bg-zinc-800/80 px-4 py-3 pr-11 text-sm text-white placeholder:text-zinc-600 transition-all focus:border-orange-500/60 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
@@ -166,9 +145,7 @@ export default function Login() {
 
           {/* Hint */}
           <p className="mt-5 text-center text-xs text-zinc-600">
-            Default credentials:{" "}
-            <span className="font-mono text-zinc-500">admin</span>
-            {" / "}
+            Default password:{" "}
             <span className="font-mono text-zinc-500">admin123</span>
           </p>
         </div>

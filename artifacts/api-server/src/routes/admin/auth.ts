@@ -8,7 +8,7 @@ import { signToken, requireAuth } from "../../middlewares/auth.js";
 const router = Router();
 
 const LoginSchema = z.object({
-  username: z.string().min(1),
+  username: z.string().min(1).optional().default("admin"),
   password: z.string().min(1),
 });
 
@@ -27,17 +27,17 @@ router.post("/login", async (req: Request, res: Response) => {
       .limit(1);
 
     if (!rows.length) {
-      res.status(401).json({ error: "Invalid username or password" });
+      res.status(401).json({ error: "Invalid password" });
       return;
     }
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
-      res.status(401).json({ error: "Invalid username or password" });
+      res.status(401).json({ error: "Invalid password" });
       return;
     }
     const token = signToken({ userId: user.id, username: user.username });
-    res.json({ token, expiresIn: "7d", username: user.username });
+    res.json({ token, expiresIn: "7d" });
   } catch {
     res.status(500).json({ error: "Login failed" });
   }

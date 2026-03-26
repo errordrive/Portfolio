@@ -1,19 +1,34 @@
 const API_BASE = "/api";
 
 function getToken(): string | null {
-  return localStorage.getItem("cms_token");
+  return localStorage.getItem("admin_token");
 }
 
 export function setToken(token: string) {
-  localStorage.setItem("cms_token", token);
+  localStorage.setItem("admin_token", token);
 }
 
 export function clearToken() {
-  localStorage.removeItem("cms_token");
+  localStorage.removeItem("admin_token");
+}
+
+export function isAuthenticated(): boolean {
+  const token = getToken();
+  if (!token) return false;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return false;
+    const payload = JSON.parse(
+      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+    ) as { exp?: number };
+    return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
+  } catch {
+    return false;
+  }
 }
 
 export function isLoggedIn(): boolean {
-  return !!getToken();
+  return isAuthenticated();
 }
 
 async function request<T>(
@@ -46,10 +61,10 @@ async function request<T>(
 // Auth
 export const api = {
   auth: {
-    login: (username: string, password: string) =>
-      request<{ token: string; username: string }>("/admin/login", {
+    login: (password: string) =>
+      request<{ token: string }>("/admin/login", {
         method: "POST",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ password }),
       }),
     me: () => request<{ userId: number; username: string }>("/admin/me"),
   },

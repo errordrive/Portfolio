@@ -7,8 +7,39 @@ export interface Env {
   ADMIN_PASSWORD?: string;
 }
 
-function getSecret(env: Env): string {
-  return env.ADMIN_PASSWORD?.trim() || "admin123";
+// ── SHA-256 password hashing via Web Crypto (native CF Workers) ───────────────
+
+async function sha256Hex(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function getJwtSecret(kv: KVNamespace, env: Env): Promise<string> {
+  const storedHash = await kv.get("admin_password_hash");
+  return storedHash || env.ADMIN_PASSWORD?.trim() || "admin123";
+}
+
+async function checkAdminPassword(
+  password: string,
+  kv: KVNamespace,
+  env: Env
+): Promise<boolean> {
+  const storedHash = await kv.get("admin_password_hash");
+  if (storedHash) {
+    const inputHash = await sha256Hex(password);
+    return timingSafeEqual(inputHash, storedHash);
+  }
+  const envPw = env.ADMIN_PASSWORD?.trim() || "admin123";
+  return timingSafeEqual(password, envPw);
 }
 
 // ── JWT via Web Crypto API (native, zero deps) ────────────────────────────────
@@ -118,7 +149,8 @@ async function getBearer(
 ): Promise<Record<string, unknown> | null> {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth.startsWith("Bearer ")) return null;
-  return verifyJwt(auth.slice(7), getSecret(env));
+  const secret = await getJwtSecret(env.PORTFOLIO_KV, env);
+  return verifyJwt(auth.slice(7), secret);
 }
 
 // ── KV helpers ────────────────────────────────────────────────────────────────
@@ -257,21 +289,19 @@ async function handle(request: Request, env: Env): Promise<Response> {
 
   // ── Public: POST /api/admin/login ─────────────────────────────────────────
   if (method === "POST" && path === "/api/admin/login") {
-    let body: { username?: string; password?: string } = {};
+    let body: { password?: string } = {};
     try {
       body = await request.json();
     } catch {
       return err("Invalid JSON body");
     }
-    const { username = "", password = "" } = body;
-    if (username !== "admin" || password !== getSecret(env)) {
-      return err("Invalid username or password", 401);
+    const { password = "" } = body;
+    if (!await checkAdminPassword(password, env.PORTFOLIO_KV, env)) {
+      return err("Invalid password", 401);
     }
-    const token = await signJwt(
-      { sub: "admin", username: "admin" },
-      getSecret(env)
-    );
-    return json({ token, username: "admin" });
+    const secret = await getJwtSecret(env.PORTFOLIO_KV, env);
+    const token = await signJwt({ sub: "admin" }, secret);
+    return json({ token });
   }
 
   // ── Public: GET /api/settings ─────────────────────────────────────────────
@@ -807,16 +837,29 @@ async function handle(request: Request, env: Env): Promise<Response> {
       return json({ success: true });
     }
 
-    // PUT /api/admin/password — not supported via API
+    // PUT /api/admin/password
     if (method === "PUT" && adminPath === "/password") {
-      return json(
-        {
-          success: false,
-          message:
-            "To change your password, set the ADMIN_PASSWORD environment variable in Cloudflare Pages → Settings → Environment Variables, then redeploy.",
-        },
-        400
-      );
+      let body: { currentPassword?: string; newPassword?: string } = {};
+      try {
+        body = await request.json();
+      } catch {
+        return err("Invalid JSON body");
+      }
+      const { currentPassword = "", newPassword = "" } = body;
+      if (!currentPassword || !newPassword) {
+        return err("currentPassword and newPassword are required");
+      }
+      if (newPassword.length < 6) {
+        return err("New password must be at least 6 characters");
+      }
+      if (!await checkAdminPassword(currentPassword, env.PORTFOLIO_KV, env)) {
+        return err("Current password is incorrect", 401);
+      }
+      const hash = await sha256Hex(newPassword);
+      await env.PORTFOLIO_KV.put("admin_password_hash", hash);
+      const newSecret = await getJwtSecret(env.PORTFOLIO_KV, env);
+      const token = await signJwt({ sub: "admin" }, newSecret);
+      return json({ success: true, token });
     }
 
     return err("Admin route not found", 404);
