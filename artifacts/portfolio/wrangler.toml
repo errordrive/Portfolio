@@ -1,0 +1,11 @@
+name = "nayem-portfolio"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist/public"
+
+[[kv_namespaces]]
+binding = "PORTFOLIO_KV"
+id = "YOUR_KV_NAMESPACE_ID"
+preview_id = "YOUR_KV_NAMESPACE_PREVIEW_ID"
+
+[vars]
+JWT_SECRET = "change-this-to-a-strong-secret-in-cloudflare-dashboard"
