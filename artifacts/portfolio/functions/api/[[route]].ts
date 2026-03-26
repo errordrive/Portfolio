@@ -217,7 +217,17 @@ const PUBLIC_SETTING_KEYS = [
   "adsense_publisher_id",
 ];
 
-const ALL_SETTING_KEYS = [...PUBLIC_SETTING_KEYS, "cv_url"];
+const ALL_SETTING_KEYS = [
+  ...PUBLIC_SETTING_KEYS,
+  "cv_url",
+  "meta_description",
+  "github_url",
+  "linkedin_url",
+  "twitter_url",
+  "adsense_script",
+  "og_image",
+  "favicon_url",
+];
 
 const DEFAULT_CONTENT_SECTIONS = [
   "hero",
@@ -461,9 +471,8 @@ async function handle(request: Request, env: Env): Promise<Response> {
     return json({ count: reactions[body.type ?? "useful"] ?? 0 });
   }
 
-  // ── Public: GET /api/sitemap ─────────────────────────────────────────────
-  // Note: /sitemap.xml is served as a static file; /api/sitemap is the dynamic version.
-  if (method === "GET" && path === "/api/sitemap") {
+  // ── Public: GET /api/sitemap or /api/sitemap.xml ─────────────────────────
+  if (method === "GET" && (path === "/api/sitemap" || path === "/api/sitemap.xml")) {
     const kv = env.PORTFOLIO_KV;
     const index = (await kvGet<BlogSummary[]>(kv, "blog:index")) ?? [];
     const published = index.filter((p) => p.published);
