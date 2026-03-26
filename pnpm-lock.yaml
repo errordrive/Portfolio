@@ -157,6 +157,15 @@ importers:
 
   .:
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260317.1
+        version: 4.20260317.1
+      hono:
+        specifier: ^4.12.9
+        version: 4.12.9
+      jose:
+        specifier: ^6.2.2
+        version: 6.2.2
       prettier:
         specifier: ^3.8.1
         version: 3.8.1

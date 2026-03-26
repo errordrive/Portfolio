@@ -11,6 +11,9 @@
   "private": true,
   "devDependencies": {
     "typescript": "~5.9.2",
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "hono": "^4.12.9",
+    "jose": "^6.2.2"
   }
 }
