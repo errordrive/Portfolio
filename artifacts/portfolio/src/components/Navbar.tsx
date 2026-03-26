@@ -60,7 +60,13 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
     setMenuOpen(false);
     if (href.startsWith("#")) {
       const id = href.replace("#", "");
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.scrollY - 72;
+          window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+        }
+      }, 50);
     } else {
       navigate(href);
     }
@@ -71,7 +77,7 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-[999] transition-all duration-300 ${
         scrolled ? "py-3 glass shadow-lg shadow-black/20" : "py-5 bg-transparent"
       }`}
     >
@@ -163,7 +169,7 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25 }}
-            className="md:hidden overflow-hidden glass border-t border-border/40 mt-3"
+            className="md:hidden overflow-hidden glass border-t border-border/40 mt-3 relative z-[1000]"
           >
             <div className="px-4 py-4 flex flex-col gap-1">
               {navLinks.map((link) => {
