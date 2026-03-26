@@ -4,9 +4,10 @@ pages_build_output_dir = "dist/public"
 
 [[kv_namespaces]]
 binding = "PORTFOLIO_KV"
-id = "YOUR_KV_NAMESPACE_ID"
-preview_id = "YOUR_KV_NAMESPACE_PREVIEW_ID"
+id = "ee8c7e2e80794b879a4d9f74adcbb21f"
+preview_id = "ee8c7e2e80794b879a4d9f74adcbb21f"
 
-# Set your admin password as an encrypted environment variable in the Cloudflare Pages dashboard:
-# Settings → Environment variables → Add variable → ADMIN_PASSWORD
-# Use any strong password you want — this is both your login password and the JWT signing key.
+# ADMIN PASSWORD:
+# Set ADMIN_PASSWORD as an environment variable in the Cloudflare Pages dashboard.
+# Pages project → Settings → Environment variables → Add variable → ADMIN_PASSWORD
+# Default password if not set: admin123
