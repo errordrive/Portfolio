@@ -7,5 +7,7 @@ binding = "PORTFOLIO_KV"
 id = "YOUR_KV_NAMESPACE_ID"
 preview_id = "YOUR_KV_NAMESPACE_PREVIEW_ID"
 
-[vars]
-JWT_SECRET = "change-this-to-a-strong-secret-in-cloudflare-dashboard"
+# Do NOT add JWT_SECRET here.
+# Set it as an encrypted environment variable in the Cloudflare Pages dashboard:
+# Settings → Environment variables → Add variable → JWT_SECRET
+# Generate a strong value with: openssl rand -base64 32

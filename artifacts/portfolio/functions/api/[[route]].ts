@@ -60,11 +60,19 @@ async function verifyToken(token: string, secret: string): Promise<jose.JWTPaylo
   }
 }
 
+function getSecret(env: Bindings): string | null {
+  const s = env.JWT_SECRET;
+  if (!s || s.trim() === "") return null;
+  return s;
+}
+
 async function requireAuth(c: { req: { header: (k: string) => string | undefined }; env: Bindings }, next: () => Promise<void>) {
+  const secret = getSecret(c.env);
+  if (!secret) return err("Server misconfiguration: JWT_SECRET not set", 500);
   const auth = c.req.header("Authorization");
   if (!auth?.startsWith("Bearer ")) return err("Unauthorized", 401);
   const token = auth.slice(7);
-  const payload = await verifyToken(token, c.env.JWT_SECRET ?? "fallback-dev-secret");
+  const payload = await verifyToken(token, secret);
   if (!payload) return err("Unauthorized", 401);
   return next();
 }
@@ -263,29 +271,35 @@ app.get("/api/sitemap.xml", async (c) => {
 });
 
 app.post("/api/admin/login", async (c) => {
+  const secret = getSecret(c.env);
+  if (!secret) return err("Server misconfiguration: JWT_SECRET not set", 500);
   const { username, password } = await c.req.json().catch(() => ({})) as { username: string; password: string };
   if (!username || !password) return err("Username and password required");
   const user = await kvGet<AdminUser>(c.env.PORTFOLIO_KV, "admin:user");
   if (!user) return err("Invalid credentials", 401);
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid || user.username !== username) return err("Invalid credentials", 401);
-  const token = await signToken({ username: user.username }, c.env.JWT_SECRET ?? "fallback-dev-secret");
+  const token = await signToken({ username: user.username }, secret);
   return c.json({ token, username: user.username });
 });
 
 app.get("/api/admin/me", async (c) => {
+  const secret = getSecret(c.env);
+  if (!secret) return err("Server misconfiguration: JWT_SECRET not set", 500);
   const auth = c.req.header("Authorization");
   if (!auth?.startsWith("Bearer ")) return err("Unauthorized", 401);
-  const payload = await verifyToken(auth.slice(7), c.env.JWT_SECRET ?? "fallback-dev-secret");
+  const payload = await verifyToken(auth.slice(7), secret);
   if (!payload) return err("Unauthorized", 401);
   return c.json({ userId: 1, username: payload.username });
 });
 
 const adminApp = new Hono<{ Bindings: Bindings }>();
 adminApp.use("*", async (c, next) => {
+  const secret = getSecret(c.env);
+  if (!secret) return err("Server misconfiguration: JWT_SECRET not set", 500);
   const auth = c.req.header("Authorization");
   if (!auth?.startsWith("Bearer ")) return err("Unauthorized", 401);
-  const payload = await verifyToken(auth.slice(7), c.env.JWT_SECRET ?? "fallback-dev-secret");
+  const payload = await verifyToken(auth.slice(7), secret);
   if (!payload) return err("Unauthorized", 401);
   return next();
 });
@@ -383,6 +397,10 @@ adminApp.put("/blog/:id", async (c) => {
   const existing = await kvGet<BlogPost>(kv, `blog:post:${slug}`);
   if (!existing) return err("Post not found", 404);
   const body = await c.req.json().catch(() => ({})) as Partial<BlogPost>;
+  if (body.slug && body.slug !== existing.slug) {
+    const collision = await kvGet<BlogPost>(kv, `blog:post:${body.slug}`);
+    if (collision) return err("Slug already in use by another post", 409);
+  }
   const updated: BlogPost = {
     ...existing,
     ...(body.title !== undefined && { title: body.title }),
