@@ -72,7 +72,7 @@ export default function About({ data: dataProp, visible: visibleProp }: AboutPro
                 <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
               </div>
 
-              <div className="absolute -right-3 sm:-right-6 top-1/4 glass rounded-2xl p-3 border border-primary/20 shadow-xl">
+              <div className="absolute -right-3 sm:-right-6 bottom-4 glass rounded-2xl p-3 border border-primary/20 shadow-xl">
                 <div className="text-xl font-black gradient-text">{d.yearsLabel || "2+"}</div>
                 <div className="text-xs text-muted-foreground mt-0.5 leading-tight">Years of<br />Building</div>
               </div>
