@@ -313,7 +313,7 @@ async function handle(request: Request, env: Env): Promise<Response> {
       env.PORTFOLIO_KV,
       `blog:${blogSlugMatch[1]}`
     );
-    if (!data) return err("Post not found", 404);
+    if (!data || !data.published) return err("Post not found", 404);
     return json(data);
   }
 
@@ -323,12 +323,17 @@ async function handle(request: Request, env: Env): Promise<Response> {
     const slug = commentsGetMatch[1];
     const list =
       (await kvGet<number[]>(env.PORTFOLIO_KV, `comments:${slug}`)) ?? [];
-    const comments = (
+    const rawComments = (
       await Promise.all(
-        list.map((id) => kvGet<Comment>(env.PORTFOLIO_KV, `comment:${id}`))
+        list.map((id) => kvGet<Comment & { email?: string; reactions?: Record<string, number> }>(env.PORTFOLIO_KV, `comment:${id}`))
       )
-    ).filter((c): c is Comment => c !== null && c.approved);
-    return json(comments);
+    ).filter((c): c is Comment & { email?: string; reactions?: Record<string, number> } => c !== null && c.approved);
+    const safeComments = rawComments.map(({ email: _email, ...rest }) => ({
+      ...rest,
+      reactions: rest.reactions ?? { useful: 0, not_useful: 0 },
+      replies: [] as Comment[],
+    }));
+    return json(safeComments);
   }
 
   // ── Public: POST /api/blog/:slug/comments ────────────────────────────────
@@ -424,6 +429,28 @@ async function handle(request: Request, env: Env): Promise<Response> {
     else if (body.type === "not_useful") reactions.not_useful = (reactions.not_useful ?? 0) + 1;
     await kvPut(kv, `comment:${id}`, { ...comment, reactions });
     return json({ count: reactions[body.type ?? "useful"] ?? 0 });
+  }
+
+  // ── Public: GET /sitemap.xml ─────────────────────────────────────────────
+  if (method === "GET" && (path === "/sitemap.xml" || path === "/api/sitemap")) {
+    const kv = env.PORTFOLIO_KV;
+    const index = (await kvGet<BlogSummary[]>(kv, "blog:index")) ?? [];
+    const published = index.filter((p) => p.published);
+    const baseUrl = "https://nayem.me";
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const staticPaths = ["/", "/blog", "/admin/login"];
+    const staticUrls = staticPaths
+      .map((p2) => `  <url><loc>${esc(baseUrl + p2)}</loc><changefreq>weekly</changefreq><priority>${p2 === "/" ? "1.0" : "0.8"}</priority></url>`)
+      .join("\n");
+    const blogUrls = published
+      .map((p2) => `  <url><loc>${esc(`${baseUrl}/blog/${p2.slug}`)}</loc><lastmod>${new Date(p2.updatedAt).toISOString().split("T")[0]}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`)
+      .join("\n");
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${staticUrls}\n${blogUrls}\n</urlset>`;
+    return new Response(xml, {
+      status: 200,
+      headers: { "Content-Type": "application/xml; charset=utf-8" },
+    });
   }
 
   // ── Admin routes (JWT required) ───────────────────────────────────────────
