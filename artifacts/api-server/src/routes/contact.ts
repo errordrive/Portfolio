@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, contactMessages } from "@workspace/db";
 import { z } from "zod";
+import { kv, getJson, putJson } from "../lib/kv.js";
 
 const router = Router();
 
@@ -11,7 +11,7 @@ const ContactSchema = z.object({
   message: z.string().min(1).max(5000),
 });
 
-router.post("/contact", async (req, res) => {
+router.post("/contact", (req, res) => {
   try {
     const parsed = ContactSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -19,7 +19,14 @@ router.post("/contact", async (req, res) => {
       return;
     }
     const { name, email, subject, message } = parsed.data;
-    await db.insert(contactMessages).values({ name, email, subject, message });
+    const counter = parseInt(kv.get("messages:counter") || "0", 10) + 1;
+    const id = String(counter);
+    const msg = { id, name, email, subject, message, read: false, createdAt: new Date().toISOString() };
+    putJson(`message:${id}`, msg);
+    const list = getJson<string[]>("messages:list", []);
+    list.unshift(id);
+    putJson("messages:list", list);
+    kv.put("messages:counter", String(counter));
     res.json({ success: true, message: "Message received. Thanks!" });
   } catch {
     res.status(500).json({ error: "Failed to send message" });

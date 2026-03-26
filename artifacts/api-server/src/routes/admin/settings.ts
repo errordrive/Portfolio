@@ -1,26 +1,28 @@
 import { Router, type Request, type Response } from "express";
-import { db, siteSettings } from "@workspace/db";
-import { requireAuth } from "../../middlewares/auth.js";
 import { z } from "zod";
+import { kv } from "../../lib/kv.js";
+import { requireAuth } from "../../lib/auth.js";
 
 const router = Router();
-
 router.use(requireAuth);
 
 const SettingsUpdateSchema = z.record(z.string(), z.string());
 
-router.get("/", async (_req: Request, res: Response) => {
+router.get("/", (_req: Request, res: Response) => {
   try {
-    const rows = await db.select().from(siteSettings);
+    const keys = kv.list("setting:");
     const result: Record<string, string> = {};
-    for (const row of rows) result[row.key] = row.value;
+    for (const k of keys) {
+      const val = kv.get(k);
+      if (val !== null) result[k.replace("setting:", "")] = val;
+    }
     res.json(result);
   } catch {
     res.status(500).json({ error: "Failed to fetch settings" });
   }
 });
 
-router.put("/", async (req: Request, res: Response) => {
+router.put("/", (req: Request, res: Response) => {
   try {
     const parsed = SettingsUpdateSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -28,13 +30,7 @@ router.put("/", async (req: Request, res: Response) => {
       return;
     }
     for (const [key, value] of Object.entries(parsed.data)) {
-      await db
-        .insert(siteSettings)
-        .values({ key, value, updatedAt: new Date() })
-        .onConflictDoUpdate({
-          target: siteSettings.key,
-          set: { value, updatedAt: new Date() },
-        });
+      kv.put(`setting:${key}`, value);
     }
     res.json({ success: true });
   } catch {

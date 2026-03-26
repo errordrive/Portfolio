@@ -1,9 +1,7 @@
 import { Router, type Request, type Response } from "express";
-import { db, blogPosts } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { getJson } from "../lib/kv.js";
 
 const router = Router();
-
 const BASE_URL = "https://nayem.me";
 
 const STATIC_PAGES = [
@@ -13,60 +11,29 @@ const STATIC_PAGES = [
   { loc: "/terms", changefreq: "yearly", priority: "0.3" },
 ];
 
-function escapeXml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+function escapeXml(str: string) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
-
-function toW3cDate(date: Date | string): string {
+function toW3cDate(date: string) {
   return new Date(date).toISOString().split("T")[0];
 }
 
-router.get("/sitemap.xml", async (_req: Request, res: Response) => {
+router.get("/sitemap.xml", (_req: Request, res: Response) => {
   try {
-    const posts = await db
-      .select({
-        slug: blogPosts.slug,
-        updatedAt: blogPosts.updatedAt,
-      })
-      .from(blogPosts)
-      .where(eq(blogPosts.published, true));
-
-    const staticEntries = STATIC_PAGES.map(
-      (page) => `  <url>
-    <loc>${escapeXml(BASE_URL + page.loc)}</loc>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>`
-    ).join("\n");
-
-    const postEntries = posts
-      .map(
-        (post) => `  <url>
-    <loc>${escapeXml(`${BASE_URL}/blog/${post.slug}`)}</loc>
-    <lastmod>${toW3cDate(post.updatedAt)}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>`
-      )
-      .join("\n");
-
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${staticEntries}
-${postEntries}
-</urlset>`;
-
-    res.setHeader("Content-Type", "application/xml; charset=utf-8");
-    res.setHeader("Cache-Control", "public, max-age=3600");
-    res.send(xml);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to generate sitemap" });
+    const posts = getJson<{ slug: string; updatedAt?: string; createdAt: string }[]>("blog:index", []);
+    const urls: string[] = [
+      ...STATIC_PAGES.map(p =>
+        `  <url><loc>${BASE_URL}${p.loc}</loc><changefreq>${p.changefreq}</changefreq><priority>${p.priority}</priority></url>`
+      ),
+      ...posts.map(p =>
+        `  <url><loc>${BASE_URL}/blog/${escapeXml(p.slug)}</loc><lastmod>${toW3cDate(p.updatedAt || p.createdAt)}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`
+      ),
+    ];
+    res.setHeader("Content-Type", "application/xml");
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`);
+  } catch {
+    res.status(500).send("<?xml version=\"1.0\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"/>");
   }
 });
 

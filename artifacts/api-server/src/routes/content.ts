@@ -1,36 +1,31 @@
 import { Router } from "express";
-import { db, contentSections } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { getJson } from "../lib/kv.js";
 
 const router = Router();
 
-router.get("/content", async (_req, res) => {
+router.get("/content", (_req, res) => {
   try {
-    const sections = await db.select().from(contentSections);
+    const sections = getJson<string[]>("content:index", []);
     const result: Record<string, unknown> = {};
     for (const s of sections) {
-      result[s.section] = { data: s.data, visible: s.visible };
+      const val = getJson<unknown>(`content:${s}`, null);
+      if (val !== null) result[s] = val;
     }
     res.json(result);
-  } catch (err) {
+  } catch {
     res.status(500).json({ error: "Failed to fetch content" });
   }
 });
 
-router.get("/content/:section", async (req, res) => {
+router.get("/content/:section", (req, res) => {
   try {
     const { section } = req.params;
-    const rows = await db
-      .select()
-      .from(contentSections)
-      .where(eq(contentSections.section, section))
-      .limit(1);
-
-    if (!rows.length) {
+    const val = getJson<unknown>(`content:${section}`, null);
+    if (!val) {
       res.status(404).json({ error: "Section not found" });
       return;
     }
-    res.json({ data: rows[0].data, visible: rows[0].visible });
+    res.json(val);
   } catch {
     res.status(500).json({ error: "Failed to fetch section" });
   }

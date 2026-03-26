@@ -1,55 +1,47 @@
 import { Router, type Request, type Response } from "express";
-import { db, contactMessages } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
-import { requireAuth } from "../../middlewares/auth.js";
+import { kv, getJson, putJson } from "../../lib/kv.js";
+import { requireAuth } from "../../lib/auth.js";
 
 const router = Router();
-
 router.use(requireAuth);
 
-router.get("/", async (_req: Request, res: Response) => {
+interface Message {
+  id: string; name: string; email: string; subject: string;
+  message: string; read: boolean; createdAt: string;
+}
+
+router.get("/", (_req: Request, res: Response) => {
   try {
-    const messages = await db
-      .select()
-      .from(contactMessages)
-      .orderBy(desc(contactMessages.createdAt));
+    const ids = getJson<string[]>("messages:list", []);
+    const messages: Message[] = ids
+      .map(id => getJson<Message | null>(`message:${id}`, null))
+      .filter((m): m is Message => m !== null);
     res.json(messages);
   } catch {
     res.status(500).json({ error: "Failed to fetch messages" });
   }
 });
 
-router.patch("/:id", async (req: Request, res: Response) => {
+router.patch("/:id", (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-
-    const existing = await db
-      .select()
-      .from(contactMessages)
-      .where(eq(contactMessages.id, id))
-      .limit(1);
-
-    if (!existing.length) { res.status(404).json({ error: "Message not found" }); return; }
-
-    const [updated] = await db
-      .update(contactMessages)
-      .set({ read: !existing[0].read })
-      .where(eq(contactMessages.id, id))
-      .returning();
-
+    const { id } = req.params;
+    const msg = getJson<Message | null>(`message:${id}`, null);
+    if (!msg) { res.status(404).json({ error: "Message not found" }); return; }
+    const updated = { ...msg, read: !msg.read };
+    putJson(`message:${id}`, updated);
     res.json(updated);
   } catch {
     res.status(500).json({ error: "Failed to update message" });
   }
 });
 
-router.delete("/:id", async (req: Request, res: Response) => {
+router.delete("/:id", (req: Request, res: Response) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-
-    await db.delete(contactMessages).where(eq(contactMessages.id, id));
+    const { id } = req.params;
+    if (!getJson(`message:${id}`, null)) { res.status(404).json({ error: "Message not found" }); return; }
+    kv.delete(`message:${id}`);
+    const list = getJson<string[]>("messages:list", []);
+    putJson("messages:list", list.filter(i => i !== id));
     res.json({ success: true });
   } catch {
     res.status(500).json({ error: "Failed to delete message" });
