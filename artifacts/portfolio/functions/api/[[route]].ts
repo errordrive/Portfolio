@@ -2,11 +2,10 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { handle } from "hono/cloudflare-pages";
 import * as jose from "jose";
-import bcrypt from "bcryptjs";
 
 export interface Env {
   PORTFOLIO_KV: KVNamespace;
-  JWT_SECRET: string;
+  ADMIN_PASSWORD: string;
 }
 
 type Bindings = Env;
@@ -72,7 +71,7 @@ async function verifyToken(token: string, secret: string): Promise<jose.JWTPaylo
 }
 
 function getSecret(env: Bindings): string | null {
-  const s = env.JWT_SECRET;
+  const s = env.ADMIN_PASSWORD;
   if (!s || s.trim() === "") return null;
   return s;
 }
@@ -102,7 +101,6 @@ function toW3cDate(date: string): string {
   return new Date(date).toISOString().split("T")[0];
 }
 
-interface AdminUser { username: string; passwordHash: string; createdAt: string; }
 interface BlogSummary { id: number; slug: string; title: string; excerpt: string; featuredImage: string; tags: string[]; published: boolean; createdAt: string; updatedAt: string; }
 interface BlogPost extends BlogSummary { content: string; metaTitle: string; metaDescription: string; adsEnabled: boolean; adTop: boolean; adMiddle: boolean; adBottom: boolean; adScript: string; }
 interface ContentSection { data: unknown; visible: boolean; updatedAt: string; }
@@ -110,26 +108,6 @@ interface Comment { id: number; postSlug: string; parentId: number | null; name:
 interface Message { id: number; name: string; email: string; subject: string; message: string; read: boolean; createdAt: string; }
 
 app.get("/api/health", (c) => c.json({ ok: true }));
-
-const SETUP_USERNAME = "admin";
-const SETUP_PASSWORD = "admin123";
-const SETUP_PASSWORD_HASH = "$2b$10$WzJT22GzZps/OEcCgE3GqugNaYj6pKQvXzH8t9.zThnZkdVufy.Pm";
-
-app.get("/api/setup", async (c) => {
-  const kv = c.env.PORTFOLIO_KV;
-  const existing = await kvGet<AdminUser>(kv, "admin:user");
-  if (existing) {
-    return c.json({ ok: false, message: "Admin already configured. Use your existing credentials to log in." });
-  }
-  const user: AdminUser = { username: SETUP_USERNAME, passwordHash: SETUP_PASSWORD_HASH, createdAt: new Date().toISOString() };
-  await kvPut(kv, "admin:user", user);
-  return c.json({
-    ok: true,
-    message: "Admin account created successfully! Save these credentials — this endpoint will not show them again.",
-    username: SETUP_USERNAME,
-    password: SETUP_PASSWORD,
-  });
-});
 
 app.get("/api/settings", async (c) => {
   const kv = c.env.PORTFOLIO_KV;
@@ -293,20 +271,17 @@ app.get("/api/sitemap.xml", async (c) => {
 
 app.post("/api/admin/login", async (c) => {
   const secret = getSecret(c.env);
-  if (!secret) return err("Server misconfiguration: JWT_SECRET not set", 500);
+  if (!secret) return err("Server misconfiguration: ADMIN_PASSWORD not set in Cloudflare environment variables", 500);
   const { username, password } = await c.req.json().catch(() => ({})) as { username: string; password: string };
   if (!username || !password) return err("Username and password required");
-  const user = await kvGet<AdminUser>(c.env.PORTFOLIO_KV, "admin:user");
-  if (!user) return err("Invalid credentials", 401);
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid || user.username !== username) return err("Invalid credentials", 401);
-  const token = await signToken({ username: user.username }, secret);
-  return c.json({ token, username: user.username });
+  if (username !== "admin" || password !== secret) return err("Invalid credentials", 401);
+  const token = await signToken({ username: "admin" }, secret);
+  return c.json({ token, username: "admin" });
 });
 
 app.get("/api/admin/me", async (c) => {
   const secret = getSecret(c.env);
-  if (!secret) return err("Server misconfiguration: JWT_SECRET not set", 500);
+  if (!secret) return err("Server misconfiguration: ADMIN_PASSWORD not set in Cloudflare environment variables", 500);
   const auth = c.req.header("Authorization");
   if (!auth?.startsWith("Bearer ")) return err("Unauthorized", 401);
   const payload = await verifyToken(auth.slice(7), secret);
@@ -317,7 +292,7 @@ app.get("/api/admin/me", async (c) => {
 const adminApp = new Hono<{ Bindings: Bindings }>();
 adminApp.use("*", async (c, next) => {
   const secret = getSecret(c.env);
-  if (!secret) return err("Server misconfiguration: JWT_SECRET not set", 500);
+  if (!secret) return err("Server misconfiguration: ADMIN_PASSWORD not set in Cloudflare environment variables", 500);
   const auth = c.req.header("Authorization");
   if (!auth?.startsWith("Bearer ")) return err("Unauthorized", 401);
   const payload = await verifyToken(auth.slice(7), secret);
@@ -574,17 +549,10 @@ adminApp.delete("/messages/:id", async (c) => {
 });
 
 adminApp.put("/password", async (c) => {
-  const { currentPassword, newPassword } = await c.req.json().catch(() => ({})) as { currentPassword: string; newPassword: string };
-  if (!currentPassword || !newPassword) return err("Both current and new password required");
-  if (newPassword.length < 6) return err("New password must be at least 6 characters");
-  const kv = c.env.PORTFOLIO_KV;
-  const user = await kvGet<AdminUser>(kv, "admin:user");
-  if (!user) return err("User not found", 404);
-  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-  if (!valid) return err("Current password is incorrect", 401);
-  const newHash = await bcrypt.hash(newPassword, 10);
-  await kvPut(kv, "admin:user", { ...user, passwordHash: newHash });
-  return c.json({ success: true });
+  return c.json({
+    success: false,
+    message: "To change your password, update the ADMIN_PASSWORD environment variable in your Cloudflare Pages dashboard (Settings → Environment Variables), then redeploy.",
+  }, 400);
 });
 
 app.route("/api/admin", adminApp);

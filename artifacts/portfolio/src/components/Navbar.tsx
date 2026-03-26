@@ -169,7 +169,7 @@ export default function Navbar({ theme, toggleTheme }: NavbarProps) {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25 }}
-            className="md:hidden overflow-hidden glass border-t border-border/40 mt-3 relative z-[1000]"
+            className="md:hidden overflow-hidden bg-background border-t border-b border-border/60 shadow-lg mt-0 relative z-[1000]"
           >
             <div className="px-4 py-4 flex flex-col gap-1">
               {navLinks.map((link) => {
