@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://nayem.me/api/sitemap.xml
+Sitemap: https://nayem.me/sitemap.xml
