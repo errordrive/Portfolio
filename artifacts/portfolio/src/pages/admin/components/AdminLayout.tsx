@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, MessageSquare, Settings,
-  Lock, LogOut, Menu, PenSquare, ChevronRight, MessageCircle
+  Lock, LogOut, Menu, PenSquare, ChevronRight, MessageCircle, Megaphone
 } from "lucide-react";
 import { clearToken } from "@/lib/api";
 
@@ -12,6 +12,7 @@ const nav = [
   { href: "/admin/blog", label: "Blog", icon: FileText },
   { href: "/admin/comments", label: "Comments", icon: MessageCircle },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare },
+  { href: "/admin/ad-settings", label: "Ad Settings", icon: Megaphone },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/password", label: "Password", icon: Lock },
 ];
@@ -23,6 +24,7 @@ const pageTitles: Record<string, string> = {
   "/admin/blog/new": "New Post",
   "/admin/comments": "Comments Manager",
   "/admin/messages": "Messages",
+  "/admin/ad-settings": "Ad Settings",
   "/admin/settings": "Settings",
   "/admin/password": "Change Password",
 };

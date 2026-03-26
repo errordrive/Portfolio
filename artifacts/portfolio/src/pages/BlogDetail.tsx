@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, Clock, Tag, MessageSquare, ThumbsUp, ThumbsDown, R
 import { Helmet } from "react-helmet-async";
 import { api } from "../lib/api";
 import type { BlogPost, Comment } from "../lib/api";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 
 function readingTime(html: string): number {
   const text = html.replace(/<[^>]*>/g, "");
@@ -30,20 +31,33 @@ function splitAtMidParagraph(html: string): [string, string] {
   return [first, second];
 }
 
-function AdUnit({ className = "" }: { className?: string }) {
-  return (
-    <div className={`w-full py-4 ${className}`}>
-      <div className="glass border border-border/40 rounded-xl px-4 py-3 text-center">
-        <div className="text-xs text-muted-foreground/60 uppercase tracking-widest mb-1">Advertisement</div>
-        <ins
-          className="adsbygoogle"
-          style={{ display: "block" }}
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        />
+function AdSlot({ position, adScript, className = "" }: {
+  position: "top" | "middle" | "bottom";
+  adScript: string;
+  className?: string;
+}) {
+  const isDev = import.meta.env.DEV;
+
+  if (adScript.trim()) {
+    return (
+      <div className={`w-full py-4 ${className}`} data-ad-slot={position}>
+        <div dangerouslySetInnerHTML={{ __html: adScript }} />
       </div>
-    </div>
-  );
+    );
+  }
+
+  if (isDev) {
+    return (
+      <div className={`w-full py-4 ${className}`} data-ad-slot={position}>
+        <div className="glass border border-dashed border-primary/30 rounded-xl px-4 py-3 text-center">
+          <div className="text-xs text-primary/60 uppercase tracking-widest">Ad slot: {position}</div>
+          <div className="text-[10px] text-muted-foreground/50 mt-1">Dev placeholder — add adScript in blog editor</div>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function AdScriptInjector({ script }: { script: string }) {
@@ -106,6 +120,7 @@ function SkeletonDetail() {
 
 export default function BlogDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const { adsenseEnabled } = useSiteSettings();
 
   const { data: post, isLoading, isError } = useQuery<BlogPost>({
     queryKey: ["blog-post", slug],
@@ -135,7 +150,9 @@ export default function BlogDetail() {
   const minutes = readingTime(post.content);
   const metaTitle = post.metaTitle || post.title;
   const metaDesc = post.metaDescription || post.excerpt;
-  const showAds = post.adsEnabled;
+  const isOnBlogPage = typeof window !== "undefined" && window.location.pathname.startsWith("/blog");
+  const showAds = isOnBlogPage && adsenseEnabled && post.adsEnabled;
+  const adScript = post.adScript ?? "";
   const [firstHalf, secondHalf] = showAds && post.adMiddle
     ? splitAtMidParagraph(post.content)
     : [post.content, ""];
@@ -156,7 +173,7 @@ export default function BlogDetail() {
         {post.featuredImage && <meta name="twitter:image" content={post.featuredImage} />}
       </Helmet>
 
-      {showAds && post.adScript && <AdScriptInjector script={post.adScript} />}
+      {showAds && adScript && <AdScriptInjector script={adScript} />}
 
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5 pointer-events-none" />
 
@@ -183,7 +200,7 @@ export default function BlogDetail() {
             </div>
           )}
 
-          {showAds && post.adTop && <AdUnit className="mb-6" />}
+          {showAds && post.adTop && <AdSlot position="top" adScript={adScript} className="mb-6" />}
 
           <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
             <span className="flex items-center gap-1">
@@ -229,7 +246,7 @@ export default function BlogDetail() {
             {showAds && post.adMiddle && secondHalf ? (
               <>
                 <div dangerouslySetInnerHTML={{ __html: firstHalf }} />
-                <AdUnit className="my-8 not-prose" />
+                <AdSlot position="middle" adScript={adScript} className="my-8 not-prose" />
                 <div dangerouslySetInnerHTML={{ __html: secondHalf }} />
               </>
             ) : (
@@ -237,7 +254,7 @@ export default function BlogDetail() {
             )}
           </article>
 
-          {showAds && post.adBottom && <AdUnit className="mt-10" />}
+          {showAds && post.adBottom && <AdSlot position="bottom" adScript={adScript} className="mt-10" />}
 
           <ShareBar title={post.title} />
 

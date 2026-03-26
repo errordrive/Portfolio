@@ -23,10 +23,15 @@ export function useSiteSettings() {
     ? rawCvUrl
     : null;
 
+  const adsenseEnabled = settings?.["adsense_enabled"] === "true";
+  const adsensePublisherId = settings?.["adsense_publisher_id"] ?? "";
+
   return {
     settings: settings ?? {},
     siteTitle: settings?.["site_title"] ?? "nayem.me",
     cvUrl,
     isLoading: settingsLoading || cvLoading,
+    adsenseEnabled,
+    adsensePublisherId,
   };
 }

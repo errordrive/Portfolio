@@ -12,6 +12,7 @@ import Messages from "./Messages";
 import Settings from "./Settings";
 import ChangePassword from "./ChangePassword";
 import Comments from "./Comments";
+import AdSettings from "./AdSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -117,6 +118,16 @@ export default function AdminApp() {
             <ProtectedRoute>
               <AdminLayout>
                 <Comments />
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="ad-settings"
+          element={
+            <ProtectedRoute>
+              <AdminLayout>
+                <AdSettings />
               </AdminLayout>
             </ProtectedRoute>
           }
