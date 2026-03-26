@@ -430,8 +430,20 @@ adminApp.put("/blog/:id", async (c) => {
   const newIndex = index.map((p) => (p.id === id ? updated : p));
   const ops: Promise<void>[] = [kvPut(kv, "blog:index", newIndex), kvPut(kv, `blog:post:${updated.slug}`, updated)];
   if (body.slug && body.slug !== existing.slug) {
-    ops.push(kv.put(`blog:id:${id}`, updated.slug) as unknown as Promise<void>);
-    ops.push(kv.delete(`blog:post:${existing.slug}`) as unknown as Promise<void>);
+    const oldSlug = existing.slug;
+    const newSlug = updated.slug;
+    ops.push(kv.put(`blog:id:${id}`, newSlug) as unknown as Promise<void>);
+    ops.push(kv.delete(`blog:post:${oldSlug}`) as unknown as Promise<void>);
+    const commentIds = await kvGet<number[]>(kv, `comments:${oldSlug}:list`) ?? [];
+    if (commentIds.length > 0) {
+      ops.push(kvPut(kv, `comments:${newSlug}:list`, commentIds) as Promise<void>);
+      ops.push(kv.delete(`comments:${oldSlug}:list`) as unknown as Promise<void>);
+      const commentUpdates = commentIds.map(async (cid) => {
+        const comment = await kvGet<Comment>(kv, `comment:${cid}`);
+        if (comment) await kvPut(kv, `comment:${cid}`, { ...comment, postSlug: newSlug });
+      });
+      ops.push(Promise.all(commentUpdates).then(() => undefined));
+    }
   }
   await Promise.all(ops);
   return c.json(updated);
