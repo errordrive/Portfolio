@@ -126,7 +126,7 @@ export default function BlogList() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5 pointer-events-none" />
 
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20">
+      <div className="relative max-w-6xl mx-auto px-4 md:px-6 pt-16 pb-12">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -143,10 +143,10 @@ export default function BlogList() {
           <div className="flex items-end justify-between gap-6 flex-wrap">
             <div>
               <span className="text-primary text-sm font-semibold tracking-widest uppercase">Blog</span>
-              <h1 className="mt-2 text-4xl lg:text-5xl font-black">
+              <h1 className="mt-2 text-3xl md:text-4xl font-black">
                 Thoughts & <span className="gradient-text">Writes</span>
               </h1>
-              <p className="mt-3 text-muted-foreground max-w-xl">
+              <p className="mt-3 text-sm md:text-base text-muted-foreground max-w-xl">
                 Notes on AI tools, vibe coding, Android RE, and whatever else I'm figuring out.
               </p>
             </div>
