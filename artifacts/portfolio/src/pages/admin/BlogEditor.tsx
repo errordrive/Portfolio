@@ -221,7 +221,9 @@ export default function BlogEditor() {
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60 shrink-0"
         >
           <Save className="w-4 h-4 shrink-0" />
-          {saving ? "…" : "Save"}
+          <span className="hidden sm:inline">{saving ? "Saving…" : "Save"}</span>
+          <span className="sm:hidden sr-only">{saving ? "Saving" : "Save"}</span>
+          <span className="sm:hidden" aria-hidden="true">{saving ? "…" : ""}</span>
         </button>
       </div>
 
