@@ -121,6 +121,7 @@ export const api = {
 
     blog: {
       list: () => request<BlogPost[]>("/admin/blog"),
+      getById: (id: number) => request<BlogPost>(`/admin/blog/${id}`),
       create: (post: Partial<BlogPost>) =>
         request<BlogPost>("/admin/blog", {
           method: "POST",

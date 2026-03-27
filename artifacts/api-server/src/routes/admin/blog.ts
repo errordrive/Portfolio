@@ -52,6 +52,20 @@ router.get("/", (_req: Request, res: Response) => {
   }
 });
 
+router.get("/:id", (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const slugs = kv.list("blog:").filter(k => k !== "blog:index" && k !== "blog:counter");
+    const post = slugs
+      .map(k => getJson<BlogPost | null>(k, null))
+      .find(p => p !== null && String(p.id) === String(id));
+    if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+    res.json(post);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch post" });
+  }
+});
+
 router.post("/", (req: Request, res: Response) => {
   try {
     const parsed = BlogSchema.safeParse(req.body);

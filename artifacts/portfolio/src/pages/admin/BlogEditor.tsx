@@ -67,14 +67,13 @@ export default function BlogEditor() {
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [editorReady, setEditorReady] = useState(false);
 
-  const { data: posts = [], isLoading: postsLoading } = useQuery<BlogPost[]>({
-    queryKey: ["admin-posts"],
-    queryFn: () => api.admin.blog.list(),
-    enabled: !isNew,
+  const { data: post, isLoading: postLoading } = useQuery<BlogPost>({
+    queryKey: ["admin-post", postId],
+    queryFn: () => api.admin.blog.getById(postId!),
+    enabled: !isNew && postId !== null,
   });
 
-  const post = posts.find(p => p.id === postId);
-  const postLoaded = isNew || (!postsLoading && !!post);
+  const postLoaded = isNew || (!postLoading && !!post);
 
   const editor = useEditor({
     extensions: [
@@ -132,6 +131,7 @@ export default function BlogEditor() {
     mutationFn: (payload: Partial<BlogPost>) => api.admin.blog.update(postId!, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-post", postId] });
       showToast("success", "Post saved");
     },
     onError: (e: unknown) => showToast("error", e instanceof Error ? e.message : "Failed to save"),
@@ -166,7 +166,7 @@ export default function BlogEditor() {
 
   const saving = createMutation.isPending || updateMutation.isPending;
 
-  if (!isNew && postsLoading) {
+  if (!isNew && postLoading) {
     return (
       <div className="max-w-4xl">
         <button onClick={() => navigate("/admin/blog")} className="flex items-center gap-2 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors mb-4">
@@ -179,7 +179,7 @@ export default function BlogEditor() {
     );
   }
 
-  if (!isNew && !postsLoading && !post) {
+  if (!isNew && !postLoading && !post) {
     return (
       <div className="max-w-4xl">
         <button onClick={() => navigate("/admin/blog")} className="flex items-center gap-2 p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors mb-4">

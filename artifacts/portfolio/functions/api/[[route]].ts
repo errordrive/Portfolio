@@ -767,8 +767,20 @@ async function handle(request: Request, env: Env): Promise<Response> {
       return json(post, 201);
     }
 
-    // PUT /api/admin/blog/:id
+    // GET /api/admin/blog/:id  (full post for editor)
     const blogIdMatch = adminPath.match(/^\/blog\/(\d+)$/);
+    if (method === "GET" && blogIdMatch) {
+      const id = parseInt(blogIdMatch[1], 10);
+      const kv = env.PORTFOLIO_KV;
+      const index = (await kvGet<BlogSummary[]>(kv, "blog:index")) ?? [];
+      const summary = index.find((p) => p.id === id);
+      if (!summary) return err("Post not found", 404);
+      const full = await kvGetBlogPost(kv, summary.slug) as BlogPost | null;
+      if (!full) return err("Post not found", 404);
+      return json(full);
+    }
+
+    // PUT /api/admin/blog/:id
     if (method === "PUT" && blogIdMatch) {
       const id = parseInt(blogIdMatch[1], 10);
       let body: Partial<BlogPost> = {};
