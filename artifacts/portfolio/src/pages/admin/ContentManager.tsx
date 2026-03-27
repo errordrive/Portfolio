@@ -103,7 +103,7 @@ function HeroTab({ initialData, initialVisible, onToast }: {
         {(["ctaPrimary", "ctaSecondary"] as const).map(k => (
           <div key={k}>
             <label className="block text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wide">{k === "ctaPrimary" ? "CTA Primary" : "CTA Secondary"}</label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input type="text" value={data[k]?.label ?? ""} placeholder="Label"
                 onChange={e => setData(d => ({ ...d, [k]: { ...d[k], label: e.target.value } }))}
                 className={`flex-1 ${INPUT_CLS}`} />
@@ -546,34 +546,36 @@ function ContactTab({ initialData, initialVisible, onToast }: {
         </div>
         <div className="space-y-2">
           {socials.map((s, i) => (
-            <div key={i} className="flex gap-2 items-center">
-              <select
-                value={s.platform}
-                onChange={e => updateSocial(i, "platform", e.target.value)}
-                className={`w-28 ${INPUT_CLS}`}
-              >
-                {PLATFORM_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-              <input
-                type="text"
-                value={s.label}
-                placeholder="Label (e.g. GitHub)"
-                onChange={e => updateSocial(i, "label", e.target.value)}
-                className={`w-32 ${INPUT_CLS}`}
-              />
+            <div key={i} className="rounded-xl bg-muted/50 border border-border p-3 space-y-2">
+              <div className="flex gap-2 items-center">
+                <select
+                  value={s.platform}
+                  onChange={e => updateSocial(i, "platform", e.target.value)}
+                  className={`flex-1 ${INPUT_CLS}`}
+                >
+                  {PLATFORM_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+                <input
+                  type="text"
+                  value={s.label}
+                  placeholder="Display name"
+                  onChange={e => updateSocial(i, "label", e.target.value)}
+                  className={`flex-1 ${INPUT_CLS}`}
+                />
+                <button
+                  onClick={() => setSocials(socials.filter((_, j) => j !== i))}
+                  className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
               <input
                 type="text"
                 value={s.href}
                 placeholder="https://..."
                 onChange={e => updateSocial(i, "href", e.target.value)}
-                className={`flex-1 ${INPUT_CLS}`}
+                className={`w-full ${INPUT_CLS}`}
               />
-              <button
-                onClick={() => setSocials(socials.filter((_, j) => j !== i))}
-                className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors shrink-0"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
             </div>
           ))}
           {socials.length === 0 && (
@@ -611,10 +613,10 @@ export default function ContentManager() {
   if (isLoading || !content) {
     return (
       <div className="max-w-4xl">
-        <div className="flex gap-1 mb-6 bg-muted rounded-xl p-1">
-          {TABS.map(tab => <div key={tab} className="px-4 py-2 rounded-lg bg-background/50 h-9 w-24 animate-pulse" />)}
+        <div className="flex gap-1 mb-4 bg-muted rounded-xl p-1 overflow-x-auto flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {TABS.map(tab => <div key={tab} className="px-4 py-2 rounded-lg bg-background/50 h-9 w-24 shrink-0 animate-pulse" />)}
         </div>
-        <div className="glass rounded-2xl border border-white/10 p-6 h-64 animate-pulse" />
+        <div className="glass rounded-2xl border border-white/10 p-4 sm:p-6 h-64 animate-pulse" />
       </div>
     );
   }
@@ -629,15 +631,15 @@ export default function ContentManager() {
   return (
     <div className="max-w-4xl">
       <Toast toast={toast} />
-      <div className="flex gap-1 mb-6 bg-muted rounded-xl p-1 flex-wrap">
+      <div className="flex gap-1 mb-4 bg-muted rounded-xl p-1 overflow-x-auto flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground"}`}>
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all shrink-0 whitespace-nowrap ${activeTab === tab ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground"}`}>
             {tab}
           </button>
         ))}
       </div>
-      <div className="glass rounded-2xl border border-white/10 p-6">
+      <div className="glass rounded-2xl border border-white/10 p-4 sm:p-6">
         {activeTab === "Hero" && <HeroTab key="hero" initialData={hero.data} initialVisible={hero.visible} onToast={handleToast} />}
         {activeTab === "About" && <AboutTab key="about" initialData={about.data} initialVisible={about.visible} onToast={handleToast} />}
         {activeTab === "Skills" && <SkillsTab key="skills" initialData={skills.data} initialVisible={skills.visible} onToast={handleToast} />}
