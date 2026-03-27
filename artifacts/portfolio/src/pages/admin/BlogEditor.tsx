@@ -202,31 +202,31 @@ export default function BlogEditor() {
         </div>
       )}
 
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate("/admin/blog")} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors">
+      <div className="flex items-center gap-2">
+        <button onClick={() => navigate("/admin/blog")} className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors shrink-0">
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <div className="flex-1" />
+        <div className="flex-1 min-w-0" />
         <button
           onClick={() => setForm(f => ({ ...f, published: !f.published }))}
           disabled={!postLoaded}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-colors disabled:opacity-50 ${form.published ? "bg-green-500/15 border-green-500/20 text-green-400 hover:bg-green-500/20" : "border-border text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
+          className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold border transition-colors disabled:opacity-50 shrink-0 ${form.published ? "bg-green-500/15 border-green-500/20 text-green-400 hover:bg-green-500/20" : "border-border text-muted-foreground hover:text-foreground hover:bg-white/5"}`}
         >
-          {form.published ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-          {form.published ? "Published" : "Draft"}
+          {form.published ? <Eye className="w-4 h-4 shrink-0" /> : <EyeOff className="w-4 h-4 shrink-0" />}
+          <span className="hidden sm:inline">{form.published ? "Published" : "Draft"}</span>
         </button>
         <button
           onClick={handleSave}
           disabled={saving || !postLoaded}
-          className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60 shrink-0"
         >
-          <Save className="w-4 h-4" />
-          {saving ? "Saving…" : "Save"}
+          <Save className="w-4 h-4 shrink-0" />
+          {saving ? "…" : "Save"}
         </button>
       </div>
 
       <div className="grid lg:grid-cols-[1fr_280px] gap-5">
-        <div className="space-y-4">
+        <div className="space-y-4 order-2 lg:order-1">
           <input
             type="text"
             value={form.title}
@@ -241,7 +241,7 @@ export default function BlogEditor() {
               type="text"
               value={form.slug}
               onChange={e => { setAutoSlug(false); setForm(f => ({ ...f, slug: e.target.value })); }}
-              className="flex-1 px-3 py-1.5 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all"
+              className="flex-1 min-w-0 px-3 py-1.5 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all"
             />
           </div>
 
@@ -269,7 +269,7 @@ export default function BlogEditor() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 order-1 lg:order-2">
           <div className="glass rounded-2xl border border-white/10 p-4 space-y-3">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Featured Image</h3>
             <input

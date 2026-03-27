@@ -28,10 +28,10 @@ export default function BlogList() {
         <p className="text-muted-foreground text-sm">{posts.length} post{posts.length !== 1 ? "s" : ""}</p>
         <Link
           to="/admin/blog/new"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          New Post
+          <Plus className="w-4 h-4 shrink-0" />
+          <span className="hidden sm:inline">New Post</span>
         </Link>
       </div>
 
@@ -56,9 +56,9 @@ export default function BlogList() {
             <tbody className="divide-y divide-white/5">
               {posts.map(post => (
                 <tr key={post.id} className="hover:bg-white/3 transition-colors">
-                  <td className="px-5 py-3">
-                    <div className="font-medium text-foreground truncate max-w-xs">{post.title}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5 truncate">{post.slug}</div>
+                  <td className="px-3 sm:px-5 py-3 min-w-0">
+                    <div className="font-medium text-foreground truncate max-w-[180px] sm:max-w-xs">{post.title}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5 truncate max-w-[180px] sm:max-w-xs">{post.slug}</div>
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${post.published ? "bg-green-500/15 text-green-400" : "bg-muted text-muted-foreground"}`}>
