@@ -5,7 +5,7 @@ const router = Router();
 
 const PUBLIC_KEYS = [
   "site_title", "site_description", "social_github", "social_linkedin",
-  "social_twitter", "adsense_enabled", "adsense_publisher_id",
+  "social_twitter", "adsense_enabled", "adsense_publisher_id", "favicon_url",
 ];
 
 router.get("/settings", (_req, res) => {

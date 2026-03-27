@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { Save, Upload, CheckCircle } from "lucide-react";
+import { Save, Upload, CheckCircle, Image } from "lucide-react";
 
 const SETTING_FIELDS = [
   { key: "site_title", label: "Site Title", placeholder: "Nayem • Vibe Coder" },
@@ -26,6 +26,8 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [cvUrl, setCvUrl] = useState("");
+  const [faviconUrl, setFaviconUrl] = useState("");
+  const [faviconPreviewOk, setFaviconPreviewOk] = useState(true);
   const [toast, setToast] = useState<{ type: "success" | "error"; msg: string } | null>(null);
 
   const { data: settingsData, isLoading: settingsLoading } = useQuery<Record<string, string>>({
@@ -38,7 +40,12 @@ export default function Settings() {
     queryFn: () => api.admin.settings.getCv(),
   });
 
-  useEffect(() => { if (settingsData) setSettings(settingsData); }, [settingsData]);
+  useEffect(() => {
+    if (settingsData) {
+      setSettings(settingsData);
+      setFaviconUrl(settingsData["favicon_url"] ?? "");
+    }
+  }, [settingsData]);
   useEffect(() => { if (cvData) setCvUrl(cvData.url || ""); }, [cvData]);
 
   function showToast(type: "success" | "error", msg: string) {
@@ -62,6 +69,16 @@ export default function Settings() {
       showToast("success", "CV URL updated");
     },
     onError: (e: unknown) => showToast("error", e instanceof Error ? e.message : "Failed to update CV"),
+  });
+
+  const faviconMutation = useMutation({
+    mutationFn: (url: string) => api.admin.settings.update({ favicon_url: url }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["public-settings"] });
+      showToast("success", "Favicon updated");
+    },
+    onError: (e: unknown) => showToast("error", e instanceof Error ? e.message : "Failed to update favicon"),
   });
 
   if (settingsLoading || cvLoading) return <div className="text-muted-foreground text-sm">Loading…</div>;
@@ -123,6 +140,47 @@ export default function Settings() {
         >
           <Upload className="w-4 h-4" />
           {cvMutation.isPending ? "Updating…" : "Update CV URL"}
+        </button>
+      </div>
+
+      <div className="glass rounded-2xl border border-white/10 p-6 space-y-4">
+        <h3 className="font-bold text-foreground">Favicon / Site Logo</h3>
+        <p className="text-xs text-muted-foreground">
+          Paste a direct URL to any image (PNG, JPG, ICO, SVG). It will show in the browser tab instead of the default orange square.
+        </p>
+
+        {faviconUrl && (
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted border border-border">
+            {faviconPreviewOk ? (
+              <img
+                src={faviconUrl}
+                alt="Favicon preview"
+                className="w-10 h-10 rounded object-contain bg-zinc-800"
+                onError={() => setFaviconPreviewOk(false)}
+              />
+            ) : (
+              <div className="w-10 h-10 rounded bg-zinc-800 flex items-center justify-center">
+                <Image className="w-5 h-5 text-zinc-500" />
+              </div>
+            )}
+            <span className="text-xs text-muted-foreground truncate flex-1">{faviconUrl}</span>
+          </div>
+        )}
+
+        <input
+          type="url"
+          value={faviconUrl}
+          onChange={e => { setFaviconUrl(e.target.value); setFaviconPreviewOk(true); }}
+          placeholder="https://example.com/logo.png"
+          className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
+        />
+        <button
+          onClick={() => faviconMutation.mutate(faviconUrl)}
+          disabled={faviconMutation.isPending}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60"
+        >
+          <Image className="w-4 h-4" />
+          {faviconMutation.isPending ? "Updating…" : "Update Favicon"}
         </button>
       </div>
     </div>

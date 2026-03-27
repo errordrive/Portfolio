@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { api } from "../lib/api";
 
 export function useSiteSettings() {
@@ -25,11 +26,24 @@ export function useSiteSettings() {
 
   const adsenseEnabled = settings?.["adsense_enabled"] === "true";
   const adsensePublisherId = settings?.["adsense_publisher_id"] ?? "";
+  const faviconUrl = settings?.["favicon_url"] ?? "";
+
+  useEffect(() => {
+    if (!faviconUrl) return;
+    let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = faviconUrl;
+  }, [faviconUrl]);
 
   return {
     settings: settings ?? {},
     siteTitle: settings?.["site_title"] ?? "nayem.me",
     cvUrl,
+    faviconUrl,
     isLoading: settingsLoading || cvLoading,
     adsenseEnabled,
     adsensePublisherId,
