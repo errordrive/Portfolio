@@ -8,6 +8,7 @@ import About from "./components/About";
 import Skills from "./components/Skills";
 import Projects from "./components/Projects";
 import Experience from "./components/Experience";
+import BlogSection from "./components/BlogSection";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
 import BlogList from "./pages/BlogList";
@@ -61,6 +62,7 @@ function Portfolio({ theme, toggleTheme }: { theme: Theme; toggleTheme: () => vo
         <Skills />
         <Projects />
         <Experience />
+        <BlogSection />
         <Contact />
       </main>
       <Footer />

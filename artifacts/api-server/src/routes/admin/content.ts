@@ -28,8 +28,7 @@ router.get("/", (_req: Request, res: Response) => {
 router.put("/:section", (req: Request, res: Response) => {
   try {
     const { section } = req.params;
-    const existing = getJson<{ data: unknown; visible: boolean; updatedAt: string } | null>(`content:${section}`, null);
-    if (!existing) { res.status(404).json({ error: "Section not found" }); return; }
+    const existing = getJson<{ data: unknown; visible: boolean; updatedAt: string } | null>(`content:${section}`, null) ?? { data: {}, visible: true, updatedAt: new Date().toISOString() };
 
     const parsed = ContentUpdateSchema.safeParse(req.body);
     if (!parsed.success) {

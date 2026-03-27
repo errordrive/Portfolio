@@ -13,10 +13,54 @@ const DEFAULT_SETTINGS: Record<string, string> = {
 };
 
 export function seedIfEmpty(): void {
-  if (kv.get("_seeded") !== null) return;
+  if (kv.get("_seeded_v2") !== null) return;
 
-  putJson("blog:index", []);
-  kv.put("blog:counter", "0");
+  const now = new Date().toISOString();
+
+  const samplePosts = [
+    {
+      id: 1, slug: "what-is-vibe-coding",
+      title: "What is Vibe Coding? My Take on AI-Powered Building",
+      excerpt: "Vibe coding is not just a trend — it's a mindset shift. Here's how I use AI to ship ideas faster than ever before.",
+      featuredImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
+      tags: ["AI", "Vibe Coding", "Productivity"],
+      published: true, createdAt: "2025-03-01T10:00:00.000Z", updatedAt: now,
+      content: "<h2>Vibe Coding Changed Everything</h2><p>Vibe coding is the art of staying in flow while building software — using AI tools like ChatGPT, Claude, and Cursor to handle the boilerplate so you can focus on the idea.</p>",
+      metaTitle: "What is Vibe Coding? | Nayem Hossain",
+      metaDescription: "Vibe coding is a mindset shift for AI-powered building.",
+      adsEnabled: false, adTop: false, adMiddle: false, adBottom: false, adScript: "",
+    },
+    {
+      id: 2, slug: "android-reverse-engineering-beginners-guide",
+      title: "Getting Started with Android Reverse Engineering",
+      excerpt: "A beginner-friendly look at how to explore Android APKs using JADX, Frida, and a curious mindset.",
+      featuredImage: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&q=80",
+      tags: ["Android", "RE", "Security"],
+      published: true, createdAt: "2025-03-10T10:00:00.000Z", updatedAt: now,
+      content: "<h2>Why I Got Into Android RE</h2><p>Android reverse engineering started as curiosity for me. I wanted to understand how apps worked under the hood.</p>",
+      metaTitle: "Android RE for Beginners | Nayem Hossain",
+      metaDescription: "A beginner-friendly guide to Android reverse engineering.",
+      adsEnabled: false, adTop: false, adMiddle: false, adBottom: false, adScript: "",
+    },
+    {
+      id: 3, slug: "ai-tools-i-use-every-day",
+      title: "The AI Tools I Actually Use Every Day",
+      excerpt: "Not every AI tool is worth your time. Here's my curated list of the ones that actually make a difference in my workflow.",
+      featuredImage: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&q=80",
+      tags: ["AI", "Tools", "Productivity"],
+      published: true, createdAt: "2025-03-20T10:00:00.000Z", updatedAt: now,
+      content: "<h2>My Daily AI Stack</h2><p>After trying dozens of AI tools, I've settled on a small set that I actually use every single day.</p>",
+      metaTitle: "AI Tools I Use Every Day | Nayem Hossain",
+      metaDescription: "Nayem's curated list of AI tools that make a real difference.",
+      adsEnabled: false, adTop: false, adMiddle: false, adBottom: false, adScript: "",
+    },
+  ];
+
+  const blogIndex = samplePosts.map(({ content: _c, metaTitle: _mt, metaDescription: _md, adsEnabled: _ae, adTop: _at, adMiddle: _am, adBottom: _ab, adScript: _as, ...summary }) => summary);
+
+  putJson("blog:index", blogIndex);
+  kv.put("blog:counter", String(samplePosts.length));
+  for (const p of samplePosts) putJson(`blog:${p.slug}`, p);
   kv.put("messages:counter", "0");
   putJson("messages:list", []);
   kv.put("comments:counter", "0");
@@ -122,5 +166,5 @@ export function seedIfEmpty(): void {
     updatedAt: new Date().toISOString(),
   });
 
-  kv.put("_seeded", "1");
+  kv.put("_seeded_v2", "1");
 }

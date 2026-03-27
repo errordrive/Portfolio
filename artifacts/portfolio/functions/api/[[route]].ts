@@ -247,6 +247,7 @@ const PUBLIC_SETTING_KEYS = [
   "social_twitter",
   "adsense_enabled",
   "adsense_publisher_id",
+  "favicon_url",
 ];
 
 const ALL_SETTING_KEYS = [
@@ -270,6 +271,90 @@ const DEFAULT_CONTENT_SECTIONS = [
   "contact",
 ];
 
+// ── KV seed ───────────────────────────────────────────────────────────────────
+
+async function seedIfEmpty(kv: KVNamespace): Promise<void> {
+  const seeded = await kv.get("_seeded");
+  if (seeded) return;
+
+  const now = new Date().toISOString();
+
+  const defaultSettings: Record<string, string> = {
+    site_title: "Nayem — Vibe Coder",
+    site_description: "Self-taught builder who uses AI smartly to ship things fast. Vibe Coder, AI user, Android RE explorer.",
+    social_github: "https://github.com/errordrive",
+    social_linkedin: "",
+    social_twitter: "",
+    adsense_publisher_id: "",
+    adsense_enabled: "false",
+    favicon_url: "",
+  };
+
+  const contentSections = ["hero", "about", "skills", "experience", "projects", "contact"];
+
+  const samplePosts: BlogPost[] = [
+    {
+      id: 1, slug: "what-is-vibe-coding",
+      title: "What is Vibe Coding? My Take on AI-Powered Building",
+      excerpt: "Vibe coding is not just a trend — it's a mindset shift. Here's how I use AI to ship ideas faster than ever before.",
+      featuredImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
+      tags: ["AI", "Vibe Coding", "Productivity"],
+      published: true, createdAt: "2025-03-01T10:00:00.000Z", updatedAt: now,
+      content: "<h2>Vibe Coding Changed Everything</h2><p>Vibe coding is the art of staying in flow while building software — using AI tools like ChatGPT, Claude, and Cursor to handle the boilerplate so you can focus on the idea.</p><p>Instead of spending hours debugging syntax errors or setting up boilerplate, you describe what you want and let AI do the heavy lifting. You stay in the creative zone.</p><h2>How I Do It</h2><p>My workflow: describe the feature → let Claude or Cursor generate it → tweak and iterate. It's fast, fun, and surprisingly effective.</p><p>The key insight is that you don't need to know everything to build something great. You just need to know what you want to build and how to communicate it clearly to AI.</p>",
+      metaTitle: "What is Vibe Coding? | Nayem Hossain",
+      metaDescription: "Vibe coding is a mindset shift for AI-powered building. Here's how Nayem uses AI to ship ideas faster.",
+      adsEnabled: false, adTop: false, adMiddle: false, adBottom: false, adScript: "",
+    },
+    {
+      id: 2, slug: "android-reverse-engineering-beginners-guide",
+      title: "Getting Started with Android Reverse Engineering",
+      excerpt: "A beginner-friendly look at how to explore Android APKs using JADX, Frida, and a curious mindset.",
+      featuredImage: "https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&q=80",
+      tags: ["Android", "RE", "Security"],
+      published: true, createdAt: "2025-03-10T10:00:00.000Z", updatedAt: now,
+      content: "<h2>Why I Got Into Android RE</h2><p>Android reverse engineering started as curiosity for me. I wanted to understand how apps worked under the hood — what APIs they called, how they stored data, what tricks they used.</p><h2>Essential Tools</h2><p><strong>JADX</strong> — The best decompiler for Android APKs. It converts .dex bytecode back into readable Java/Kotlin code.</p><p><strong>Frida</strong> — A dynamic instrumentation toolkit. It lets you hook into running apps and inspect or modify their behavior in real time.</p><h2>First Steps</h2><p>Download JADX, grab any APK (your own apps are great for practice), and start exploring. Look at how the app structures its code, what API endpoints it uses, and how it handles authentication.</p>",
+      metaTitle: "Android RE for Beginners | Nayem Hossain",
+      metaDescription: "A beginner-friendly guide to Android reverse engineering using JADX and Frida.",
+      adsEnabled: false, adTop: false, adMiddle: false, adBottom: false, adScript: "",
+    },
+    {
+      id: 3, slug: "ai-tools-i-use-every-day",
+      title: "The AI Tools I Actually Use Every Day",
+      excerpt: "Not every AI tool is worth your time. Here's my curated list of the ones that actually make a difference in my workflow.",
+      featuredImage: "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=800&q=80",
+      tags: ["AI", "Tools", "Productivity"],
+      published: true, createdAt: "2025-03-20T10:00:00.000Z", updatedAt: now,
+      content: "<h2>My Daily AI Stack</h2><p>After trying dozens of AI tools, I've settled on a small set that I actually use every single day. Here's what made the cut and why.</p><h2>Claude (Anthropic)</h2><p>My go-to for writing, coding, and thinking through complex problems. Claude's context window and reasoning are unmatched for long-form tasks.</p><h2>Cursor</h2><p>The best AI code editor. It understands your entire codebase and suggests changes that actually make sense. Vibe coding becomes 10x easier with Cursor.</p><h2>ChatGPT</h2><p>Still useful for quick questions, image generation (DALL-E), and when I need a second opinion. GPT-4 is solid for most everyday tasks.</p><h2>The Pattern</h2><p>The best AI tools are the ones that disappear into your workflow. You stop thinking about the tool and start thinking about the idea. That's the goal.</p>",
+      metaTitle: "AI Tools I Use Every Day | Nayem Hossain",
+      metaDescription: "Nayem's curated list of AI tools that make a real difference in his daily workflow.",
+      adsEnabled: false, adTop: false, adMiddle: false, adBottom: false, adScript: "",
+    },
+  ];
+
+  const blogIndex = samplePosts.map(({ content: _c, metaTitle: _mt, metaDescription: _md, adsEnabled: _ae, adTop: _at, adMiddle: _am, adBottom: _ab, adScript: _as, ...summary }) => summary);
+
+  const ops: Promise<void>[] = [
+    kvPut(kv, "content:index", contentSections),
+    kvPut(kv, "blog:index", blogIndex),
+    kv.put("blog:counter", String(samplePosts.length)),
+    kv.put("messages:counter", "0"),
+    kvPut(kv, "messages:list", []),
+    kv.put("comments:counter", "0"),
+    kv.put("cv:url", ""),
+    ...Object.entries(defaultSettings).map(([k, v]) => kv.put(`setting:${k}`, v)),
+    ...samplePosts.map((p) => kvPut(kv, `blog:${p.slug}`, p)),
+    kvPut(kv, "content:hero", { data: { name: "Nayem Hossain", statusBadge: "Open to collaborate", tagline: "Building with AI · Shipping things fast · Exploring Android", body: "I get ideas off the ground fast — using AI as my superpower. I don't just write code, I vibe with it. Building cool stuff, exploring Android internals, and letting AI do the heavy lifting.", roles: ["Vibe Coder", "AI-Powered Builder", "Android RE Explorer"], ctaPrimary: { label: "View Work", href: "#projects" }, ctaSecondary: { label: "Download CV", href: "" }, stats: [{ label: "Projects Shipped", value: "20+" }, { label: "AI Tools I Use", value: "15+" }, { label: "Apps Explored", value: "50+" }] }, visible: true, updatedAt: now }),
+    kvPut(kv, "content:about", { data: { heading: "Just a guy who vibes with code", yearsLabel: "2+ Years of Building Stuff", bio: ["I'm Nayem — a self-taught builder who figured out that you don't need to be an expert to ship great things.", "My thing is Vibe Coding — using AI tools like ChatGPT, Claude, and Cursor to move fast and build things that actually work.", "On the side, I've been exploring Android reverse engineering — digging into APKs and understanding how apps work under the hood."], highlights: [{ title: "AI as My Superpower", desc: "I don't fight AI — I ride it. Using tools like ChatGPT, Claude, and Cursor to build faster and smarter.", color: "#f97316" }, { title: "Android RE Explorer", desc: "I enjoy poking around Android apps — understanding how things work under the hood and learning from what I find.", color: "#8b5cf6" }, { title: "Vibe Coding", desc: "My style: start with the vibe, let AI handle the boilerplate, and ship something that actually works.", color: "#10b981" }, { title: "Builder Mindset", desc: "Done is better than perfect — but I still make it look good.", color: "#3b82f6" }] }, visible: true, updatedAt: now }),
+    kvPut(kv, "content:skills", { data: { skills: [{ name: "Vibe Coding", icon: "✨", level: 95, category: "Craft", desc: "Ship fast, iterate faster, stay in the flow" }, { name: "AI Tool Usage", icon: "🤖", level: 92, category: "AI", desc: "ChatGPT, Claude, Cursor, Gemini & more" }, { name: "Prompt Engineering", icon: "💬", level: 88, category: "AI", desc: "Getting AI to do exactly what you need" }, { name: "Android RE Basics", icon: "🔓", level: 65, category: "RE", desc: "APK analysis, JADX, basic Frida usage" }, { name: "Web Development", icon: "🌐", level: 75, category: "Dev", desc: "React, HTML/CSS, basic backend stuff" }, { name: "Python Scripting", icon: "🐍", level: 70, category: "Dev", desc: "Automation, quick scripts, AI integrations" }, { name: "Linux / Shell", icon: "🐧", level: 72, category: "Dev", desc: "Terminal comfort, basic bash scripting" }, { name: "Builder Mindset", icon: "🚀", level: 98, category: "Craft", desc: "Ideas → shipped products, fast and fun" }] }, visible: true, updatedAt: now }),
+    kvPut(kv, "content:experience", { data: { timeline: [{ year: "2025–Now", title: "Full-time Vibe Coder", org: "Self / Freelance", desc: "Shipping projects using AI tools every day. ChatGPT, Claude, Cursor — these are my team.", tags: ["AI Tools", "React", "Cursor"], color: "#f97316" }, { year: "2024", title: "Discovered Vibe Coding", org: "Self-directed", desc: "Found out you don't need to be a 10x engineer to build great things — you just need to use AI smartly.", tags: ["ChatGPT", "Claude", "Prompt Engineering"], color: "#8b5cf6" }, { year: "2024", title: "Started Android RE", org: "Hobby & Learning", desc: "Got curious about how Android apps work under the hood. Started using JADX and Frida to explore APKs.", tags: ["JADX", "Frida", "Android"], color: "#10b981" }, { year: "2023", title: "First Real Project Shipped", org: "Personal", desc: "Built and deployed my first working web app. That feeling of shipping something real got me hooked.", tags: ["HTML", "CSS", "JavaScript"], color: "#3b82f6" }] }, visible: true, updatedAt: now }),
+    kvPut(kv, "content:projects", { data: { projects: [{ title: "AI Study Buddy", desc: "An AI-powered study assistant using ChatGPT API. Made in a weekend with Cursor + React.", tech: ["React", "ChatGPT API", "Cursor"], github: "#", demo: "#", featured: true }, { title: "APK Explorer Tool", desc: "A personal tool to quickly decompile and explore Android APKs, with AI-generated summaries.", tech: ["Python", "JADX", "AI"], github: "#", demo: "#", featured: true }, { title: "Vibe Portfolio", desc: "My personal portfolio — designed and built entirely with AI assistance.", tech: ["React", "Vite", "Claude"], github: "#", demo: "#", featured: true }] }, visible: true, updatedAt: now }),
+    kvPut(kv, "content:contact", { data: { bio: "Whether you need an AI solution, want to reverse engineer something, or just want to vibe-code together — I'm just a message away.", email: "nayem@nayem.me", location: "Bangladesh 🇧🇩", socials: [{ platform: "github", label: "GitHub", href: "https://github.com/errordrive" }, { platform: "telegram", label: "Telegram", href: "https://t.me/nayem" }] }, visible: true, updatedAt: now }),
+    kv.put("_seeded", "1"),
+  ];
+
+  await Promise.all(ops);
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 async function handle(request: Request, env: Env): Promise<Response> {
@@ -281,6 +366,9 @@ async function handle(request: Request, env: Env): Promise<Response> {
   if (method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
+
+  // Seed KV on first request
+  await seedIfEmpty(env.PORTFOLIO_KV);
 
   // ── Public: GET /api/health ───────────────────────────────────────────────
   if (method === "GET" && path === "/api/health") {
