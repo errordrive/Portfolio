@@ -126,9 +126,9 @@ function HeroTab({ initialData, initialVisible, onToast }: {
         <div className="space-y-2">
           {data.stats.map((stat, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <input type="text" value={stat.value} placeholder="20+" onChange={e => updateStat(i, "value", e.target.value)} className={`w-20 ${INPUT_CLS}`} />
-              <input type="text" value={stat.label} placeholder="Label" onChange={e => updateStat(i, "label", e.target.value)} className={`flex-1 ${INPUT_CLS}`} />
-              <button onClick={() => setData(d => ({ ...d, stats: d.stats.filter((_, j) => j !== i) }))} className="p-1.5 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+              <input type="text" value={stat.value} placeholder="20+" onChange={e => updateStat(i, "value", e.target.value)} className={`w-16 shrink-0 ${INPUT_CLS}`} />
+              <input type="text" value={stat.label} placeholder="Label" onChange={e => updateStat(i, "label", e.target.value)} className={`flex-1 min-w-0 ${INPUT_CLS}`} />
+              <button onClick={() => setData(d => ({ ...d, stats: d.stats.filter((_, j) => j !== i) }))} className="p-1.5 shrink-0 text-muted-foreground hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
           ))}
         </div>
