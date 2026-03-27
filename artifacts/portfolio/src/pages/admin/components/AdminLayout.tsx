@@ -88,7 +88,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   );
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background flex overflow-x-hidden">
       <aside className="hidden lg:flex w-60 flex-col fixed inset-y-0 left-0 z-50 border-r border-white/10 bg-card">
         <SidebarContent />
       </aside>
@@ -102,8 +102,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       )}
 
-      <div className="flex-1 lg:ml-60 flex flex-col min-h-screen">
-        <header className="sticky top-0 z-40 flex items-center gap-4 px-6 h-14 border-b border-white/10 bg-background/80 backdrop-blur-md">
+      <div className="flex-1 min-w-0 lg:ml-60 flex flex-col min-h-screen overflow-x-hidden">
+        <header className="sticky top-0 z-40 flex items-center gap-4 px-3 sm:px-6 h-14 border-b border-white/10 bg-background/80 backdrop-blur-md">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"

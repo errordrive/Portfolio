@@ -40,7 +40,7 @@ function Field({ label, value, onChange, textarea, rows = 3, placeholder }: {
   );
 }
 
-const INPUT_CLS = "px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all";
+const INPUT_CLS = "min-w-0 px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm focus:outline-none focus:border-primary/50 transition-all";
 
 function VisibilityToggle({ visible, onChange }: { visible: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -55,8 +55,10 @@ function VisibilityToggle({ visible, onChange }: { visible: boolean; onChange: (
 function SaveBtn({ onSave, isPending, label }: { onSave: () => void; isPending: boolean; label: string }) {
   return (
     <button onClick={onSave} disabled={isPending}
-      className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60">
-      <Save className="w-4 h-4" />{isPending ? "Saving…" : label}
+      className="flex items-center gap-2 px-3 sm:px-5 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors disabled:opacity-60 shrink-0">
+      <Save className="w-4 h-4 shrink-0" />
+      <span className="hidden sm:inline">{isPending ? "Saving…" : label}</span>
+      <span className="sm:hidden">{isPending ? "…" : "Save"}</span>
     </button>
   );
 }
