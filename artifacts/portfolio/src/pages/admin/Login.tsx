@@ -143,13 +143,7 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Hint */}
-          <p className="mt-5 text-center text-xs text-zinc-600">
-            Set{" "}
-            <span className="font-mono text-zinc-500">ADMIN_PASSWORD</span>
-            {" "}env var, or default:{" "}
-            <span className="font-mono text-zinc-500">admin123</span>
-          </p>
+
         </div>
 
         {/* Footer note */}
